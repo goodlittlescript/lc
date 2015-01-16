@@ -1,0 +1,29 @@
+#!/bin/bash
+. test/integration/helper
+
+setup_template_file () {
+template_file="$ts_test_dir/example.erb"
+mkdir -p "$ts_test_dir"
+printf "%s" "$1" > "$template_file"
+printf "%s\n" "$template_file"
+}
+
+test_lc_renders_file_with_args () {
+setup_template_file "1 + 2 = <%= args.map(&:to_i).inject(0, &:+) %>"
+lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
+}
+
+test_lc_assigns_args_a_generic_name () {
+setup_template_file "1 + 2 = <%= arg0.to_i + arg1.to_i %>"
+lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
+}
+
+#
+# -h
+#
+
+test_lc_h_prints_help () {
+lc -h | grep -q "usage: lc"
+}
+
+. ts

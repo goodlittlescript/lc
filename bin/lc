@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+begin
+  require 'optparse'
+  require 'erb'
+
+  options = {}
+  OptionParser.new do |opts|
+    opts.banner = %{
+usage: lc [options] TEMPLATE ARGS...
+
+  Render ERB templates with arguments.
+
+options:
+
+}.lstrip
+
+    opts.on("-h", "--help", "print this help") do
+      puts opts
+      puts
+      exit
+    end
+
+  end.parse!
+
+  template_file, *args = ARGV; ARGV.clear
+  template  = ERB.new(File.read(template_file))
+  template.filename = template_file
+
+  arg_names = Array.new(args.length) {|i| "arg#{i}" }
+  context   = \
+  Struct.new("Context", *arg_names) do
+    alias args to_a
+
+    def render(template)
+      template.result(binding)
+    end
+
+    def to_s
+      "context"
+    end
+  end
+
+  print context.new(*args).render(template)
+
+rescue Interrupt
+  exit 130
+rescue Errno::EPIPE
+  exit 0
+end
