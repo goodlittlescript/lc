@@ -1,6 +1,6 @@
 require 'linecook/context'
 require 'erb'
-require 'yaml'
+autoload(:YAML, "yaml")
 
 module Linecook
   class Template

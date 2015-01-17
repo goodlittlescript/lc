@@ -26,7 +26,7 @@ class Linecook::TemplateTest < Test::Unit::TestCase
 
   def test_attrs_returns_attrs_from_attributes_file
     attrs = {"key" => "value"}
-    File.open(attributes_file, "w") {|io| io << attrs.to_yaml }
+    File.open(attributes_file, "w") {|io| io << YAML.dump(attrs) }
 
     assert_equal attrs, template.attrs
   end
@@ -42,7 +42,7 @@ class Linecook::TemplateTest < Test::Unit::TestCase
 
   def test_context_assigns_argument_names_as_per_attributes_file
     attrs = {"args" => ["a", "b"]}
-    File.open(attributes_file, "w") {|io| io << attrs.to_yaml }
+    File.open(attributes_file, "w") {|io| io << YAML.dump(attrs) }
 
     context = template.context([1, 2, 3, 4, 5])
     assert_equal [1, 2, 3, 4, 5], context.args
