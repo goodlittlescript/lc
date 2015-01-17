@@ -19,6 +19,11 @@ options:
 
 }.lstrip
 
+    opts.on("-F", "--field-sep FS", "field sep for csv inputs (assumes -f)") do |input|
+      options[:input] = :csv
+      options[:field_sep] = input
+    end
+
     opts.on("-f", "--csv-file", "read args from csv inputs") do
       options[:input] = :csv
     end

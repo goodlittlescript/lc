@@ -17,6 +17,11 @@ module Linecook
         path = options[:path]
         config[:template_dirs] = path.split(":")
 
+        config[:csv_options] = {}
+        if field_sep = options[:field_sep]
+          config[:csv_options][:col_sep] = field_sep
+        end
+
         new(config)
       end
 
@@ -30,7 +35,7 @@ module Linecook
 
     def initialize(config)
       @template_dirs = config.fetch(:template_dirs) { [] }
-      @csv_options = {}
+      @csv_options = config.fetch(:csv_options) { {} }
     end
 
     def parse_csv(line)

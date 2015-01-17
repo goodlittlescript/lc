@@ -75,6 +75,21 @@ got x y z
 }
 
 #
+# -F
+#
+
+test_lc_F_sets_field_sep_for_csv_inputs () {
+setup_template_file "\
+got <%= args.join(' ') %>
+"
+printf "%s|%s|%s\n" a b c x y z |
+lc -F '|' "$template_file" | assert_output "\
+got a b c
+got x y z
+"
+}
+
+#
 # -l
 #
 
