@@ -8,7 +8,6 @@ template_name="example"
 template_file="$ts_test_dir/$template_name.erb"
 mkdir -p "$ts_test_dir"
 printf "%s" "$1" > "$template_file"
-printf "%s\n" "$template_file"
 }
 
 setup_attributes_file () {
@@ -16,7 +15,6 @@ template_name="example"
 attributes_file="$ts_test_dir/$template_name.yml"
 mkdir -p "$ts_test_dir"
 printf "%s" "$1" > "$attributes_file"
-printf "%s\n" "$attributes_file"
 }
 
 #
