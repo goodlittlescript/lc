@@ -24,7 +24,7 @@ module Linecook
       end
 
       def default_template_dirs
-        []
+        ["~/.lc", "/etc/lc"]
       end
     end
 
@@ -58,7 +58,7 @@ module Linecook
       @templates ||= begin
         templates = {}
         template_dirs.each do |dir|
-          Dir.glob("#{dir}/*.erb").each do |file|
+          Dir.glob(File.expand_path("#{dir}/*.erb")).each do |file|
             name = File.basename(file).chomp(".erb")
             template = Template.new(file)
             templates[name] ||= template
