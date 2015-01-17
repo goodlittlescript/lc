@@ -1,6 +1,8 @@
 #!/bin/bash
 . test/integration/helper
 
+# helpers
+
 setup_template_file () {
 template_name="example"
 template_file="$ts_test_dir/$template_name.erb"
@@ -9,13 +11,29 @@ printf "%s" "$1" > "$template_file"
 printf "%s\n" "$template_file"
 }
 
+setup_attributes_file () {
+template_name="example"
+attributes_file="$ts_test_dir/$template_name.yml"
+mkdir -p "$ts_test_dir"
+printf "%s" "$1" > "$attributes_file"
+printf "%s\n" "$attributes_file"
+}
+
+#
+# lc tests
+#
+
 test_lc_renders_file_with_args () {
 setup_template_file "1 + 2 = <%= args.map(&:to_i).inject(0, &:+) %>"
 lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
 }
 
-test_lc_assigns_args_a_generic_name () {
-setup_template_file "1 + 2 = <%= arg0.to_i + arg1.to_i %>"
+test_lc_assigns_argnames_according_to_attributes_file () {
+setup_template_file "1 + 2 = <%= a.to_i + b.to_i %>"
+setup_attributes_file "\
+args: [a, b]
+"
+
 lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
 }
 

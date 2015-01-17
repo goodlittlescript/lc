@@ -53,21 +53,7 @@ options:
       exit 1
     end
 
-    arg_names = Array.new(args.length) {|i| "arg#{i}" }
-    context   = \
-    Struct.new("Context", *arg_names) do
-      alias args to_a
-
-      def render(template)
-        template.result(binding)
-      end
-
-      def to_s
-        "context"
-      end
-    end
-
-    print context.new(*args).render(template)
+    print template.result(args)
   end
 
 rescue Interrupt

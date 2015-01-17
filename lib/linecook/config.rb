@@ -33,7 +33,7 @@ module Linecook
     def template_files
       templates_files = {}
       templates.each_pair do |name, template|
-        templates_files[name] = template.filename
+        templates_files[name] = template.template_file
       end
       templates_files
     end

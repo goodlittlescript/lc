@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 require File.expand_path('../../helper', __FILE__)
 require 'linecook/config'
-require 'tmpdir'
-require 'fileutils'
 
 class Linecook::ConfigTest < Test::Unit::TestCase
   Config = Linecook::Config
@@ -73,9 +71,9 @@ class Linecook::ConfigTest < Test::Unit::TestCase
 
       config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
       assert_equal ["x", "y", "z"], config.templates.keys.sort
-      assert_equal "#{test_dir_a}/x.erb", config.templates["x"].filename
-      assert_equal "#{test_dir_a}/y.erb", config.templates["y"].filename
-      assert_equal "#{test_dir_b}/z.erb", config.templates["z"].filename
+      assert_equal "#{test_dir_a}/x.erb", config.templates["x"].template_file
+      assert_equal "#{test_dir_a}/y.erb", config.templates["y"].template_file
+      assert_equal "#{test_dir_b}/z.erb", config.templates["z"].template_file
     ensure
       FileUtils.remove_entry test_dir_a
       FileUtils.remove_entry test_dir_b
