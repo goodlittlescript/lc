@@ -53,8 +53,11 @@ options:
 
   case mode
   when :list
-    config.templates.each_pair do |name, file|
-      puts name
+    max_name = config.templates.keys.map(&:size).length
+    format = "%-#{max_name}s    %s"
+    config.templates.each_pair do |name, template|
+      line = format % [name, template.desc]
+      puts line.strip
     end
 
   else

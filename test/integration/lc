@@ -168,6 +168,26 @@ xyz
 "
 }
 
+test_lc_l_prints_desc_as_in_attributes_file_if_present () {
+mkdir -p "$ts_test_dir"
+
+touch "$ts_test_dir/abc.erb"
+cat > "$ts_test_dir/abc.yml" <<DOC
+desc: "the abc template"
+DOC
+
+touch "$ts_test_dir/xyz.erb"
+cat > "$ts_test_dir/xyz.yml" <<DOC
+# no desc
+DOC
+
+export LC_PATH="$ts_test_dir"
+lc -l | assert_output "\
+abc    the abc template
+xyz
+"
+}
+
 #
 # -h
 #

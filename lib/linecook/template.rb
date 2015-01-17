@@ -17,7 +17,7 @@ module Linecook
     def attrs
       @attrs ||= begin
         if File.exists?(attributes_file)
-          YAML.load_file(attributes_file)
+          YAML.load_file(attributes_file) || {}
         else
           {}
         end
@@ -45,6 +45,10 @@ module Linecook
 
     def arg_names
       default_args.keys
+    end
+
+    def desc
+      attrs.fetch("desc", nil)
     end
 
     def context_class
