@@ -1,3 +1,5 @@
+require 'linecook/template'
+
 module Linecook
   class Config
     class << self
@@ -29,15 +31,24 @@ module Linecook
     end
 
     def template_files
-      @template_files ||= begin
-        template_files = {}
+      templates_files = {}
+      templates.each_pair do |name, template|
+        templates_files[name] = template.filename
+      end
+      templates_files
+    end
+
+    def templates
+      @templates ||= begin
+        templates = {}
         template_dirs.each do |dir|
           Dir.glob("#{dir}/*.erb").each do |file|
             name = File.basename(file).chomp(".erb")
-            template_files[name] ||= file
+            template = Template.new(file)
+            templates[name] ||= template
           end
         end
-        template_files
+        templates
       end
     end
   end

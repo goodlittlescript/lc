@@ -35,7 +35,7 @@ class Linecook::ConfigTest < Test::Unit::TestCase
   # template_files
   #
 
-  def test_template_files_returns_all_templates_found_on_path
+  def test_template_files_returns_all_template_files_found_on_path
     test_dir_a = Dir.mktmpdir
     test_dir_b = Dir.mktmpdir
 
@@ -51,6 +51,31 @@ class Linecook::ConfigTest < Test::Unit::TestCase
         "y" => "#{test_dir_a}/y.erb",
         "z" => "#{test_dir_b}/z.erb",
       }, config.template_files)
+    ensure
+      FileUtils.remove_entry test_dir_a
+      FileUtils.remove_entry test_dir_b
+    end
+  end
+
+  #
+  # templates
+  #
+
+  def test_templates_returns_all_templates_found_on_path
+    test_dir_a = Dir.mktmpdir
+    test_dir_b = Dir.mktmpdir
+
+    begin
+      FileUtils.touch "#{test_dir_a}/x.erb"
+      FileUtils.touch "#{test_dir_a}/y.erb"
+      FileUtils.touch "#{test_dir_b}/y.erb"
+      FileUtils.touch "#{test_dir_b}/z.erb"
+
+      config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
+      assert_equal ["x", "y", "z"], config.templates.keys.sort
+      assert_equal "#{test_dir_a}/x.erb", config.templates["x"].filename
+      assert_equal "#{test_dir_a}/y.erb", config.templates["y"].filename
+      assert_equal "#{test_dir_b}/z.erb", config.templates["z"].filename
     ensure
       FileUtils.remove_entry test_dir_a
       FileUtils.remove_entry test_dir_b

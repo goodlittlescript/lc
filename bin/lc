@@ -1,9 +1,13 @@
 #!/usr/bin/env ruby
-begin
-  require 'optparse'
-  require 'erb'
+$:.unshift File.expand_path('../../lib', __FILE__)
 
-  options = {}
+begin
+  require 'linecook'
+  require 'optparse'
+
+  options = Linecook.options(
+    :mode => :render
+  )
   OptionParser.new do |opts|
     opts.banner = %{
 usage: lc [options] TEMPLATE ARGS...
@@ -14,6 +18,10 @@ options:
 
 }.lstrip
 
+    opts.on("-l", "--list", "list templates") do
+      options[:mode] = :list
+    end
+
     opts.on("-h", "--help", "print this help") do
       puts opts
       puts
@@ -22,41 +30,45 @@ options:
 
   end.parse!
 
+  mode = options[:mode]
+  config = Linecook.setup(options)
   template_file, *args = ARGV; ARGV.clear
 
-  unless File.exists?(template_file)
-    template_name = template_file
-    template_dirs = ENV['LC_PATH'].split(":")
-    template_file = template_dirs.map do |dir|
-      "#{dir}/#{template_name}.erb"
-    end.find do |file|
-      File.exists?(file)
+  case mode
+  when :list
+    config.templates.each_pair do |name, file|
+      puts name
     end
 
-    if template_file.nil?
-      $stderr.puts "could not find template: #{template_name.inspect}"
+  else
+    template = \
+    if File.exists?(template_file)
+      Linecook::Template.new(template_file)
+    else
+      config.templates[template_file]
+    end
+
+    if template.nil?
+      $stderr.puts "could not find template: #{template_file.inspect}"
       exit 1
     end
-  end
 
-  template  = ERB.new(File.read(template_file))
-  template.filename = template_file
+    arg_names = Array.new(args.length) {|i| "arg#{i}" }
+    context   = \
+    Struct.new("Context", *arg_names) do
+      alias args to_a
 
-  arg_names = Array.new(args.length) {|i| "arg#{i}" }
-  context   = \
-  Struct.new("Context", *arg_names) do
-    alias args to_a
+      def render(template)
+        template.result(binding)
+      end
 
-    def render(template)
-      template.result(binding)
+      def to_s
+        "context"
+      end
     end
 
-    def to_s
-      "context"
-    end
+    print context.new(*args).render(template)
   end
-
-  print context.new(*args).render(template)
 
 rescue Interrupt
   exit 130

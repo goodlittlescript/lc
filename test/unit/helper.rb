@@ -5,3 +5,5 @@ require 'bundler'
 Bundler.setup
 
 require 'test/unit'
+require 'tmpdir'
+require 'fileutils'

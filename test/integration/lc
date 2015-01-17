@@ -33,6 +33,21 @@ could not find template: \"missing\"
 }
 
 #
+# -l
+#
+
+test_lc_l_prints_list_of_templates_on_LC_PATH () {
+mkdir -p "$ts_test_dir"
+touch "$ts_test_dir/abc.erb"
+touch "$ts_test_dir/xyz.erb"
+export LC_PATH="$ts_test_dir"
+lc -l | assert_output "\
+abc
+xyz
+"
+}
+
+#
 # -h
 #
 
