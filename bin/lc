@@ -28,6 +28,11 @@ options:
       options[:input] = :csv
     end
 
+    opts.on("-H", "--headers", "map csv headers to args") do
+      options[:input] = :csv
+      options[:headers] = true
+    end
+
     opts.on("-l", "--list", "list templates") do
       options[:mode] = :list
     end
@@ -44,7 +49,7 @@ options:
   input = options[:input]
 
   config = Linecook.setup(options)
-  template_file = ARGV.shift
+  template_file, *csv_files = ARGV; ARGV.clear
 
   case mode
   when :list
@@ -67,12 +72,21 @@ options:
 
     case input
     when :args
-      args = ARGV.dup; ARGV.clear
+      args = csv_files
       print template.result(args)
     when :csv
-      ARGF.each do |line|
-        args = config.parse_csv(line)
-        print template.result(args)
+      if csv_files.empty?
+        csv_files << "-" 
+      end
+
+      csv_files.each do |file|
+        file = 0 if file == "-"
+        File.open(file) do |source|
+          parser = config.parser(source, template.arg_names)
+          while args = parser.gets
+            print template.result(args)
+          end
+        end
       end
     end
   end

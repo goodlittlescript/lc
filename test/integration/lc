@@ -90,6 +90,56 @@ got x y z
 }
 
 #
+# -H
+#
+
+test_lc_H_specifies_each_csv_file_has_headers () {
+setup_template_file "\
+got <%= args.join(' ') %>
+"
+
+csv_file_one="$ts_test_dir/one.csv"
+printf "%s,%s,%s\n" A B C a b c i j k > "$csv_file_one"
+
+csv_file_two="$ts_test_dir/two.csv"
+printf "%s,%s,%s\n" A B C x y z > "$csv_file_two"
+
+printf "%s,%s,%s\n" A B C p q r |
+lc -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+got a b c
+got i j k
+got p q r
+got x y z
+"
+}
+
+test_lc_H_maps_csv_fields_to_named_args_on_a_per_file_basis () {
+setup_template_file "\
+got <%= self.A %> <%= self.B %> <%= self.C %>
+"
+setup_attributes_file "\
+args: [A, B, C]
+"
+
+# extra fields
+csv_file_one="$ts_test_dir/one.csv"
+printf "%s,%s,%s,%s\n" A B C D a b c d i j k l > "$csv_file_one"
+
+# out-of-order fields
+csv_file_two="$ts_test_dir/two.csv"
+printf "%s,%s,%s\n" B C A y z x > "$csv_file_two"
+
+# in-order fields
+printf "%s,%s,%s\n" A B C p q r |
+lc -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+got a b c
+got i j k
+got p q r
+got x y z
+"
+}
+
+#
 # -l
 #
 

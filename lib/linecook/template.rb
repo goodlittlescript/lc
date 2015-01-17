@@ -24,8 +24,12 @@ module Linecook
       end
     end
 
+    def arg_names=(arg_names)
+      @arg_names = arg_names
+    end
+
     def arg_names
-      @arg_names ||= attrs.fetch("args") { [] }.map(&:to_sym)
+      @arg_names ||= attrs.fetch("args") { [] }.map(&:to_s)
     end
 
     def context_class

@@ -1,5 +1,5 @@
 require 'linecook/template'
-autoload :CSV, 'csv'
+require 'linecook/parser'
 
 module Linecook
   class Config
@@ -7,6 +7,7 @@ module Linecook
       def options(overrides = {})
         {
           :path => ENV["LC_PATH"] || default_template_dirs.join(":"),
+          :field_sep => ',',
         }.merge(overrides)
       end
 
@@ -16,11 +17,8 @@ module Linecook
 
         path = options[:path]
         config[:template_dirs] = path.split(":")
-
-        config[:csv_options] = {}
-        if field_sep = options[:field_sep]
-          config[:csv_options][:col_sep] = field_sep
-        end
+        config[:field_sep] = options[:field_sep]
+        config[:headers] = options[:headers]
 
         new(config)
       end
@@ -31,15 +29,21 @@ module Linecook
     end
 
     attr_reader :template_dirs
-    attr_reader :csv_options
+    attr_reader :field_sep
+    attr_reader :headers
 
-    def initialize(config)
-      @template_dirs = config.fetch(:template_dirs) { [] }
-      @csv_options = config.fetch(:csv_options) { {} }
+    def initialize(config = {})
+      @template_dirs  = config.fetch(:template_dirs) { [] }
+      @field_sep      = config.fetch(:field_sep, ',')
+      @headers        = config.fetch(:headers, nil)
     end
 
-    def parse_csv(line)
-      CSV.parse_line(line, csv_options)
+    def parser(source, arg_names = nil)
+      Parser.new(source,
+        :field_sep => field_sep,
+        :headers   => headers,
+        :arg_names => arg_names,
+      )
     end
 
     def template_files

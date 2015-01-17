@@ -4,6 +4,7 @@ require 'linecook/config'
 
 class Linecook::ConfigTest < Test::Unit::TestCase
   Config = Linecook::Config
+  Template = Linecook::Template
 
   attr_reader :test_dir
 
@@ -27,6 +28,32 @@ class Linecook::ConfigTest < Test::Unit::TestCase
   def test_Config_setup_sets_template_dirs_from_path
     config = Config.setup(:path => "a:b:c")
     assert_equal ["a", "b", "c"], config.template_dirs
+  end
+
+  #
+  # parser
+  #
+
+  def test_parser_returns_a_csv_parser_for_source
+    config = Config.new
+    assert_equal ["a", "b c", "d"], config.parser('a,"b c",d').gets
+  end
+
+  def test_parser_respects_field_sep
+    config = Config.new(:field_sep => '|')
+    assert_equal ["a", "b", "c"], config.parser('a|b|c').gets
+  end
+
+  def test_parser_orders_fields_according_to_arg_names_when_headers_is_true
+    config = Config.new(:headers  => true)
+    source = "C,A,B\nc,a,b\n"
+    assert_equal ["a", "b", "c"], config.parser(source, ["A", "B", "C"]).gets
+  end
+
+  def test_parser_returns_fields_in_order_when_headers_is_true_and_no_arg_names_are_specfied
+    config = Config.new(:headers  => true)
+    source = "C,A,B\nc,a,b\n"
+    assert_equal ["c", "a", "b"], config.parser(source).gets
   end
 
   #
