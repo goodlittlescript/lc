@@ -1,4 +1,5 @@
 require 'linecook/template'
+autoload :CSV, 'csv'
 
 module Linecook
   class Config
@@ -25,9 +26,15 @@ module Linecook
     end
 
     attr_reader :template_dirs
+    attr_reader :csv_options
 
     def initialize(config)
       @template_dirs = config.fetch(:template_dirs) { [] }
+      @csv_options = {}
+    end
+
+    def parse_csv(line)
+      CSV.parse_line(line, csv_options)
     end
 
     def template_files

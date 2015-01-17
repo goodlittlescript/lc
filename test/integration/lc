@@ -51,6 +51,30 @@ could not find template: \"missing\"
 }
 
 #
+# -f
+#
+
+test_lc_f_renders_template_for_each_line_in_csv_inputs () {
+setup_template_file "\
+got <%= args.join(' ') %>
+"
+
+csv_file_one="$ts_test_dir/one.csv"
+printf "%s,%s,%s\n" a b c i j k > "$csv_file_one"
+
+csv_file_two="$ts_test_dir/two.csv"
+printf "%s,%s,%s\n" x y z > "$csv_file_two"
+
+printf "%s,%s,%s\n" p q r |
+lc -f "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+got a b c
+got i j k
+got p q r
+got x y z
+"
+}
+
+#
 # -l
 #
 

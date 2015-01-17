@@ -6,7 +6,8 @@ begin
   require 'optparse'
 
   options = Linecook.options(
-    :mode => :render
+    :mode  => :render,
+    :input => :args,
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -17,6 +18,10 @@ usage: lc [options] TEMPLATE ARGS...
 options:
 
 }.lstrip
+
+    opts.on("-f", "--csv-file", "read args from csv inputs") do
+      options[:input] = :csv
+    end
 
     opts.on("-l", "--list", "list templates") do
       options[:mode] = :list
@@ -30,9 +35,11 @@ options:
 
   end.parse!
 
-  mode = options[:mode]
+  mode  = options[:mode]
+  input = options[:input]
+
   config = Linecook.setup(options)
-  template_file, *args = ARGV; ARGV.clear
+  template_file = ARGV.shift
 
   case mode
   when :list
@@ -53,7 +60,16 @@ options:
       exit 1
     end
 
-    print template.result(args)
+    case input
+    when :args
+      args = ARGV.dup; ARGV.clear
+      print template.result(args)
+    when :csv
+      ARGF.each do |line|
+        args = config.parse_csv(line)
+        print template.result(args)
+      end
+    end
   end
 
 rescue Interrupt
