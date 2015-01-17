@@ -152,6 +152,15 @@ got x y z
 }
 
 #
+# -I
+#
+
+test_lc_I_sets_LC_PATH () {
+setup_template_file "<%= 1 + 2 %>"
+lc -I "$ts_test_dir" "$template_name" | assert_output "3"
+}
+
+#
 # -l
 #
 

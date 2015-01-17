@@ -33,6 +33,10 @@ options:
       options[:headers] = true
     end
 
+    opts.on("-I", "--path LC_PATH", "set template search path") do |input|
+      options[:path] = input
+    end
+
     opts.on("-l", "--list", "list templates") do
       options[:mode] = :list
     end
