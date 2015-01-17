@@ -23,6 +23,22 @@ options:
   end.parse!
 
   template_file, *args = ARGV; ARGV.clear
+
+  unless File.exists?(template_file)
+    template_name = template_file
+    template_dirs = ENV['LC_PATH'].split(":")
+    template_file = template_dirs.map do |dir|
+      "#{dir}/#{template_name}.erb"
+    end.find do |file|
+      File.exists?(file)
+    end
+
+    if template_file.nil?
+      $stderr.puts "could not find template: #{template_name.inspect}"
+      exit 1
+    end
+  end
+
   template  = ERB.new(File.read(template_file))
   template.filename = template_file
 

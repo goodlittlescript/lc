@@ -1,1 +1,5 @@
+# set PATH
 export PATH="$PWD/bin:$PATH"
+
+# clear LC variables
+export LC_PATH=""
