@@ -129,7 +129,10 @@ setup_template_file "\
 got <%= self.A %> <%= self.B %> <%= self.C %>
 "
 setup_attributes_file "\
-args: [A, B, C]
+args:
+  A: a
+  B: b
+  C: c
 "
 
 # extra fields
@@ -140,12 +143,12 @@ printf "%s,%s,%s,%s\n" A B C D a b c d i j k l > "$csv_file_one"
 csv_file_two="$ts_test_dir/two.csv"
 printf "%s,%s,%s\n" B C A y z x > "$csv_file_two"
 
-# in-order fields
-printf "%s,%s,%s\n" A B C p q r |
+# missing fields
+printf "%s,%s\n" A B p q |
 lc -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
 got i j k
-got p q r
+got p q c
 got x y z
 "
 }

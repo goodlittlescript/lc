@@ -52,7 +52,7 @@ module Linecook
     end
 
     def context(args)
-      context_class.new(args)
+      context_class.new(args, default_args.values)
     end
 
     def erb
@@ -64,11 +64,6 @@ module Linecook
     end
 
     def result(args)
-      n_missing = default_args.length - args.length
-      if n_missing > 0
-        args = args + default_args.values[n_missing, default_args.length - n_missing]
-      end
-
       context(args).__render__(erb)
     end
   end
