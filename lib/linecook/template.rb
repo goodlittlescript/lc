@@ -28,8 +28,23 @@ module Linecook
       @arg_names = arg_names
     end
 
+    def default_args
+      @default_args ||= begin
+        args = attrs.fetch("args") { {} }
+        case args
+        when Array
+          args = Hash[args.zip(Array.new(args.length))]
+        when Hash
+          # do nothing
+        else
+          raise "invalid args: #{args.inspect} (#{attributes_file})"
+        end
+        args
+      end
+    end
+
     def arg_names
-      @arg_names ||= attrs.fetch("args") { [] }.map(&:to_s)
+      default_args.keys
     end
 
     def context_class
@@ -49,6 +64,11 @@ module Linecook
     end
 
     def result(args)
+      n_missing = default_args.length - args.length
+      if n_missing > 0
+        args = args + default_args.values[n_missing, default_args.length - n_missing]
+      end
+
       context(args).__render__(erb)
     end
   end
