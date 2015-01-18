@@ -11,7 +11,14 @@ module Linecook
     end
 
     def attributes_file
-      @attributes_file ||= template_file.sub(/\.erb$/, ".yml")
+      @attributes_file ||= begin
+        extname = File.extname(template_file)
+        if extname == ".lc"
+          template_file
+        else
+          template_file.chomp(extname) + ".yml"
+        end
+      end
     end
 
     def attrs
@@ -59,9 +66,20 @@ module Linecook
       context_class.new(args, default_args.values)
     end
 
+    def text
+      @text ||= begin
+        text = File.read(template_file)
+        extname = File.extname(template_file)
+        if extname == ".lc"
+          text = text.split("---\n", 2).last
+        end
+        text
+      end
+    end
+
     def erb
       @erb ||= begin
-        erb = ERB.new(File.read(template_file))
+        erb = ERB.new(text)
         erb.filename = template_file
         erb
       end

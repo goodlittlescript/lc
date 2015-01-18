@@ -46,6 +46,21 @@ args:
 lc "$template_file" 1 | assert_output "1 + 2 = 3"
 }
 
+test_lc_recognizes_attributes_in_lc_files () {
+mkdir -p "$ts_test_dir/dir"
+cat > "$ts_test_dir/example.lc" <<DOC
+args:
+  a: 0
+  b: 2
+---
+1 + 2 = <%= a.to_i + b.to_i %>
+DOC
+
+lc "$ts_test_dir/example.lc" 1 | assert_output "\
+1 + 2 = 3
+"
+}
+
 test_lc_looks_up_template_file_along_LC_PATH () {
 setup_template_file "<%= 1 + 2 %>"
 export LC_PATH="$ts_test_dir"
