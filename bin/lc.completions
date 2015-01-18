@@ -1,0 +1,14 @@
+_lc() {
+  local word words
+
+  # tries to do -L completions on the first word only
+  word=${COMP_WORDS[COMP_CWORD]}
+  words="$(lc -L "${COMP_WORDS[@]:1}" | grep -v "^${COMP_WORDS[1]}$")"
+
+  if [ -n "$words" ]
+  then COMPREPLY=( $(compgen -W "$words" -- "$word") )
+  else COMPREPLY=()
+  fi
+}
+
+complete -o bashdefault -o default -F _lc lc
