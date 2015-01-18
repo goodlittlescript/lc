@@ -52,6 +52,14 @@ export LC_PATH="$ts_test_dir"
 lc "$template_name" | assert_output "3"
 }
 
+test_lc_can_find_template_files_under_dir () {
+mkdir -p "$ts_test_dir/dir"
+printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/template.erb"
+
+export LC_PATH="$ts_test_dir"
+lc dir/template | assert_output "3"
+}
+
 test_lc_prints_error_if_template_cannot_be_found_on_LC_PATH () {
 export LC_PATH="$ts_test_dir"
 lc missing 2>&1 | assert_output "\
