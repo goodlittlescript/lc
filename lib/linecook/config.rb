@@ -6,7 +6,7 @@ module Linecook
     class << self
       def options(overrides = {})
         {
-          :path => ENV["LC_PATH"] || default_template_dirs.join(":"),
+          :path => ENV["LINECOOK_PATH"] || default_template_dirs.join(":"),
           :field_sep => ',',
         }.merge(overrides)
       end

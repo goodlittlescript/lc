@@ -18,24 +18,24 @@ printf "%s" "$1" > "$attributes_file"
 }
 
 #
-# lc tests
+# linecook tests
 #
 
-test_lc_renders_file_with_args () {
+test_linecook_renders_file_with_args () {
 setup_template_file "1 + 2 = <%= args.map(&:to_i).inject(0, &:+) %>"
-lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
+linecook "$template_file" 1 2 | assert_output "1 + 2 = 3"
 }
 
-test_lc_assigns_argnames_according_to_attributes_file () {
+test_linecook_assigns_argnames_according_to_attributes_file () {
 setup_template_file "1 + 2 = <%= a.to_i + b.to_i %>"
 setup_attributes_file "\
 args: [a, b]
 "
 
-lc "$template_file" 1 2 | assert_output "1 + 2 = 3"
+linecook "$template_file" 1 2 | assert_output "1 + 2 = 3"
 }
 
-test_lc_assigns_defaults_according_to_attributes_file () {
+test_linecook_assigns_defaults_according_to_attributes_file () {
 setup_template_file "1 + 2 = <%= a.to_i + b.to_i %>"
 setup_attributes_file "\
 args:
@@ -43,10 +43,10 @@ args:
   b: 2
 "
 
-lc "$template_file" 1 | assert_output "1 + 2 = 3"
+linecook "$template_file" 1 | assert_output "1 + 2 = 3"
 }
 
-test_lc_recognizes_attributes_in_lc_files () {
+test_linecook_recognizes_attributes_in_lc_files () {
 mkdir -p "$ts_test_dir/dir"
 cat > "$ts_test_dir/example.lc" <<DOC
 args:
@@ -56,34 +56,34 @@ args:
 1 + 2 = <%= a.to_i + b.to_i %>
 DOC
 
-lc "$ts_test_dir/example.lc" 1 | assert_output "\
+linecook "$ts_test_dir/example.lc" 1 | assert_output "\
 1 + 2 = 3
 "
 }
 
-test_lc_looks_up_template_file_along_LC_PATH () {
+test_linecook_looks_up_template_file_along_LINECOOK_PATH () {
 setup_template_file "<%= 1 + 2 %>"
-export LC_PATH="$ts_test_dir"
-lc "$template_name" | assert_output "3"
+export LINECOOK_PATH="$ts_test_dir"
+linecook "$template_name" | assert_output "3"
 }
 
-test_lc_can_find_template_files_under_dir () {
+test_linecook_can_find_template_files_under_dir () {
 mkdir -p "$ts_test_dir/dir"
 printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/template.erb"
 
-export LC_PATH="$ts_test_dir"
-lc dir/template | assert_output "3"
+export LINECOOK_PATH="$ts_test_dir"
+linecook dir/template | assert_output "3"
 }
 
-test_lc_prints_error_if_template_cannot_be_found_on_LC_PATH () {
-export LC_PATH="$ts_test_dir"
-lc missing 2>&1 | assert_output "\
+test_linecook_prints_error_if_template_cannot_be_found_on_LINECOOK_PATH () {
+export LINECOOK_PATH="$ts_test_dir"
+linecook missing 2>&1 | assert_output "\
 could not find template: \"missing\"
 "
 }
 
-test_lc_prints_error_if_no_template_is_specified () {
-lc 2>&1 | assert_output "\
+test_linecook_prints_error_if_no_template_is_specified () {
+linecook 2>&1 | assert_output "\
 no template specified
 "
 }
@@ -92,7 +92,7 @@ no template specified
 # -f
 #
 
-test_lc_f_renders_template_for_each_line_in_csv_inputs () {
+test_linecook_f_renders_template_for_each_line_in_csv_inputs () {
 setup_template_file "\
 got <%= args.join(' ') %>
 "
@@ -104,7 +104,7 @@ csv_file_two="$ts_test_dir/two.csv"
 printf "%s,%s,%s\n" x y z > "$csv_file_two"
 
 printf "%s,%s,%s\n" p q r |
-lc -f "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+linecook -f "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
 got i j k
 got p q r
@@ -116,12 +116,12 @@ got x y z
 # -F
 #
 
-test_lc_F_sets_field_sep_for_csv_inputs () {
+test_linecook_F_sets_field_sep_for_csv_inputs () {
 setup_template_file "\
 got <%= args.join(' ') %>
 "
 printf "%s|%s|%s\n" a b c x y z |
-lc -F '|' "$template_file" | assert_output "\
+linecook -F '|' "$template_file" | assert_output "\
 got a b c
 got x y z
 "
@@ -131,7 +131,7 @@ got x y z
 # -H
 #
 
-test_lc_H_specifies_each_csv_file_has_headers () {
+test_linecook_H_specifies_each_csv_file_has_headers () {
 setup_template_file "\
 got <%= args.join(' ') %>
 "
@@ -143,7 +143,7 @@ csv_file_two="$ts_test_dir/two.csv"
 printf "%s,%s,%s\n" A B C x y z > "$csv_file_two"
 
 printf "%s,%s,%s\n" A B C p q r |
-lc -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
 got i j k
 got p q r
@@ -151,7 +151,7 @@ got x y z
 "
 }
 
-test_lc_H_maps_csv_fields_to_named_args_on_a_per_file_basis () {
+test_linecook_H_maps_csv_fields_to_named_args_on_a_per_file_basis () {
 setup_template_file "\
 got <%= self.A %> <%= self.B %> <%= self.C %>
 "
@@ -172,7 +172,7 @@ printf "%s,%s,%s\n" B C A y z x > "$csv_file_two"
 
 # missing fields
 printf "%s,%s\n" A B p q |
-lc -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
 got i j k
 got p q c
@@ -184,36 +184,36 @@ got x y z
 # -I
 #
 
-test_lc_I_sets_LC_PATH () {
+test_linecook_I_sets_LINECOOK_PATH () {
 setup_template_file "<%= 1 + 2 %>"
-lc -I "$ts_test_dir" "$template_name" | assert_output "3"
+linecook -I "$ts_test_dir" "$template_name" | assert_output "3"
 }
 
 #
 # -L
 #
 
-test_lc_L_prints_list_of_matching_templates_on_LC_PATH () {
+test_linecook_L_prints_list_of_matching_templates_on_LINECOOK_PATH () {
 mkdir -p "$ts_test_dir"
 touch "$ts_test_dir/abc.erb"
 touch "$ts_test_dir/abd.erb"
 touch "$ts_test_dir/a.erb"
 touch "$ts_test_dir/ax.erb"
 
-export LC_PATH="$ts_test_dir"
-lc -L ab | assert_output "\
+export LINECOOK_PATH="$ts_test_dir"
+linecook -L ab | assert_output "\
 abc
 abd
 "
 }
 
-test_lc_L_prints_all_templates_if_no_template_is_specified () {
+test_linecook_L_prints_all_templates_if_no_template_is_specified () {
 mkdir -p "$ts_test_dir"
 touch "$ts_test_dir/abc.erb"
 touch "$ts_test_dir/xyz.erb"
 
-export LC_PATH="$ts_test_dir"
-lc -L | assert_output "\
+export LINECOOK_PATH="$ts_test_dir"
+linecook -L | assert_output "\
 abc
 xyz
 "
@@ -223,18 +223,18 @@ xyz
 # -l
 #
 
-test_lc_l_prints_list_of_templates_on_LC_PATH () {
+test_linecook_l_prints_list_of_templates_on_LINECOOK_PATH () {
 mkdir -p "$ts_test_dir"
 touch "$ts_test_dir/abc.erb"
 touch "$ts_test_dir/xyz.erb"
-export LC_PATH="$ts_test_dir"
-lc -l | assert_output "\
+export LINECOOK_PATH="$ts_test_dir"
+linecook -l | assert_output "\
 abc
 xyz
 "
 }
 
-test_lc_l_prints_desc_as_in_attributes_file_if_present () {
+test_linecook_l_prints_desc_as_in_attributes_file_if_present () {
 mkdir -p "$ts_test_dir"
 
 touch "$ts_test_dir/abc.erb"
@@ -247,8 +247,8 @@ cat > "$ts_test_dir/xyz.yml" <<DOC
 # no desc
 DOC
 
-export LC_PATH="$ts_test_dir"
-lc -l | assert_output "\
+export LINECOOK_PATH="$ts_test_dir"
+linecook -l | assert_output "\
 abc    the abc template
 xyz
 "
@@ -258,8 +258,8 @@ xyz
 # -h
 #
 
-test_lc_h_prints_help () {
-lc -h | grep -q "usage: lc"
+test_linecook_h_prints_help () {
+linecook -h | grep -q "usage: linecook"
 }
 
 . ts

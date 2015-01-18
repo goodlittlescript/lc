@@ -1,5 +1,5 @@
 # set PATH
 export PATH="$PWD/bin:$PATH"
 
-# clear LC variables
-export LC_PATH=""
+# clear LINECOOK variables
+export LINECOOK_PATH=""

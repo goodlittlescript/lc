@@ -11,7 +11,7 @@ begin
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: lc [options] TEMPLATE ARGS...
+usage: linecook [options] TEMPLATE ARGS...
 
   Render ERB templates with arguments.
 
