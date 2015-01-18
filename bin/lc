@@ -37,6 +37,10 @@ options:
       options[:path] = input
     end
 
+    opts.on("-L", "--list-filter", "list filtering for matches") do
+      options[:mode] = :list_filter
+    end
+
     opts.on("-l", "--list", "list templates") do
       options[:mode] = :list
     end
@@ -62,6 +66,13 @@ options:
     config.templates.each_pair do |name, template|
       line = format % [name, template.desc]
       puts line.strip
+    end
+
+  when :list_filter
+    config.templates.each_pair do |name, template|
+      if template_file.nil? || name.index(template_file) == 0
+        puts name
+      end
     end
 
   else

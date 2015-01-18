@@ -190,6 +190,36 @@ lc -I "$ts_test_dir" "$template_name" | assert_output "3"
 }
 
 #
+# -L
+#
+
+test_lc_L_prints_list_of_matching_templates_on_LC_PATH () {
+mkdir -p "$ts_test_dir"
+touch "$ts_test_dir/abc.erb"
+touch "$ts_test_dir/abd.erb"
+touch "$ts_test_dir/a.erb"
+touch "$ts_test_dir/ax.erb"
+
+export LC_PATH="$ts_test_dir"
+lc -L ab | assert_output "\
+abc
+abd
+"
+}
+
+test_lc_L_prints_all_templates_if_no_template_is_specified () {
+mkdir -p "$ts_test_dir"
+touch "$ts_test_dir/abc.erb"
+touch "$ts_test_dir/xyz.erb"
+
+export LC_PATH="$ts_test_dir"
+lc -L | assert_output "\
+abc
+xyz
+"
+}
+
+#
 # -l
 #
 
