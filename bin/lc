@@ -65,6 +65,11 @@ options:
     end
 
   else
+    if template_file.nil?
+      $stderr.puts "no template specified"
+      exit 1
+    end
+
     template = \
     if File.exists?(template_file)
       Linecook::Template.new(template_file)

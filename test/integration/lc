@@ -59,6 +59,12 @@ could not find template: \"missing\"
 "
 }
 
+test_lc_prints_error_if_no_template_is_specified () {
+lc 2>&1 | assert_output "\
+no template specified
+"
+}
+
 #
 # -f
 #
