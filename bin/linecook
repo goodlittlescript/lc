@@ -7,11 +7,11 @@ begin
 
   options = Linecook.options(
     :mode  => :render,
-    :input => :fields,
+    :input => :csv,
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: linecook [options] TEMPLATE FIELDS...
+usage: linecook [options] TEMPLATE CSV_FILES...
 
   Render ERB templates.
 
@@ -19,17 +19,15 @@ options:
 
 }.lstrip
 
-    opts.on("-F", "--field-sep FS", "field sep for csv inputs (assumes -f)") do |input|
-      options[:input] = :csv
+    opts.on("-F", "--field-sep FS", "field sep") do |input|
       options[:field_sep] = input
     end
 
-    opts.on("-f", "--csv-file", "read fields from csv inputs") do
-      options[:input] = :csv
+    opts.on("-f", "--fields", "read fields from args") do
+      options[:input] = :fields
     end
 
-    opts.on("-H", "--headers", "map csv headers to fields") do
-      options[:input] = :csv
+    opts.on("-H", "--headers", "map headers to fields") do
       options[:headers] = true
     end
 
