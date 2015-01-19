@@ -4,7 +4,7 @@ module Linecook
   class Parser
 
     def initialize(source, options = {})
-      @arg_names = options.fetch(:arg_names, nil)
+      @field_names = options.fetch(:field_names, nil)
 
       csv_options = {}
       if field_sep = options[:field_sep]
@@ -24,8 +24,8 @@ module Linecook
         case
         when row.kind_of?(Array)
           row
-        when @arg_names
-          row.fields(*@arg_names)
+        when @field_names
+          row.fields(*@field_names)
         else
           row.fields
         end

@@ -10,8 +10,8 @@ module Linecook
       @template_file = template_file
     end
 
-    def attributes_file
-      @attributes_file ||= begin
+    def properties_file
+      @properties_file ||= begin
         extname = File.extname(template_file)
         if extname == ".lc"
           template_file
@@ -21,49 +21,49 @@ module Linecook
       end
     end
 
-    def attrs
-      @attrs ||= begin
-        if File.exists?(attributes_file)
-          YAML.load_file(attributes_file) || {}
+    def properties
+      @properties ||= begin
+        if File.exists?(properties_file)
+          YAML.load_file(properties_file) || {}
         else
           {}
         end
       end
     end
 
-    def arg_names=(arg_names)
-      @arg_names = arg_names
+    def field_names=(field_names)
+      @field_names = field_names
     end
 
-    def default_args
-      @default_args ||= begin
-        args = attrs.fetch("args") { {} }
-        case args
+    def default_fields
+      @default_fields ||= begin
+        fields = properties.fetch("fields") { {} }
+        case fields
         when Array
-          args = Hash[args.zip(Array.new(args.length))]
+          fields = Hash[fields.zip(Array.new(fields.length))]
         when Hash
           # do nothing
         else
-          raise "invalid args: #{args.inspect} (#{attributes_file})"
+          raise "invalid fields: #{fields.inspect} (#{properties_file})"
         end
-        args
+        fields
       end
     end
 
-    def arg_names
-      default_args.keys
+    def field_names
+      default_fields.keys
     end
 
     def desc
-      attrs.fetch("desc", nil)
+      properties.fetch("desc", nil)
     end
 
     def context_class
-      @context_class ||= Context.subclass(arg_names)
+      @context_class ||= Context.subclass(field_names)
     end
 
-    def context(args)
-      context_class.new(args, default_args.values)
+    def context(fields)
+      context_class.new(fields, default_fields.values)
     end
 
     def text
@@ -85,8 +85,8 @@ module Linecook
       end
     end
 
-    def result(args)
-      context(args).__render__(erb)
+    def result(fields)
+      context(fields).__render__(erb)
     end
   end
 end

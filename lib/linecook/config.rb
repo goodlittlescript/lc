@@ -38,11 +38,11 @@ module Linecook
       @headers        = config.fetch(:headers, nil)
     end
 
-    def parser(source, arg_names = nil)
+    def parser(source, field_names = nil)
       Parser.new(source,
         :field_sep => field_sep,
         :headers   => headers,
-        :arg_names => arg_names,
+        :field_names => field_names,
       )
     end
 

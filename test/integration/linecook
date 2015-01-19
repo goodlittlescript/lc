@@ -1,78 +1,104 @@
 #!/bin/bash
 . test/integration/helper
 
-# helpers
+setup () {
+mkdir -p "$ts_test_dir"
 
-setup_template_file () {
 template_name="example"
 template_file="$ts_test_dir/$template_name.erb"
-mkdir -p "$ts_test_dir"
-printf "%s" "$1" > "$template_file"
+properties_file="$ts_test_dir/$template_name.yml"
 }
 
-setup_attributes_file () {
-template_name="example"
-attributes_file="$ts_test_dir/$template_name.yml"
-mkdir -p "$ts_test_dir"
-printf "%s" "$1" > "$attributes_file"
+setup_fixture () {
+cat > "$template_file" <<DOC
+got <%= fields.join(' ') %>
+DOC
+}
+
+setup_fixture_with_properties () {
+cat > "$template_file" <<DOC
+got <%= xx %> <%= yy %> <%= zz %>
+DOC
+
+cat > "$properties_file" <<DOC
+fields:
+  xx: X
+  yy: Y
+  zz: Z
+DOC
 }
 
 #
 # linecook tests
 #
 
-test_linecook_renders_file_with_args () {
-setup_template_file "1 + 2 = <%= args.map(&:to_i).inject(0, &:+) %>"
-linecook "$template_file" 1 2 | assert_output "1 + 2 = 3"
-}
-
-test_linecook_assigns_argnames_according_to_attributes_file () {
-setup_template_file "1 + 2 = <%= a.to_i + b.to_i %>"
-setup_attributes_file "\
-args: [a, b]
-"
-
-linecook "$template_file" 1 2 | assert_output "1 + 2 = 3"
-}
-
-test_linecook_assigns_defaults_according_to_attributes_file () {
-setup_template_file "1 + 2 = <%= a.to_i + b.to_i %>"
-setup_attributes_file "\
-args:
-  a: 0
-  b: 2
-"
-
-linecook "$template_file" 1 | assert_output "1 + 2 = 3"
-}
-
-test_linecook_recognizes_attributes_in_lc_files () {
-mkdir -p "$ts_test_dir/dir"
-cat > "$ts_test_dir/example.lc" <<DOC
-args:
-  a: 0
-  b: 2
----
-1 + 2 = <%= a.to_i + b.to_i %>
+test_linecook_renders_file_with_fields () {
+cat > "$template_file" <<DOC
+got <%= fields.join(' ') %>
 DOC
 
-linecook "$ts_test_dir/example.lc" 1 | assert_output "\
-1 + 2 = 3
+linecook "$template_file" a b c | assert_output "\
+got a b c
+"
+}
+
+test_linecook_assigns_field_names_according_to_properties_file () {
+cat > "$template_file" <<DOC
+got <%= xx %> <%= yy %> <%= zz %>
+DOC
+
+cat > "$properties_file" <<DOC
+fields: [xx, yy, zz]
+DOC
+
+linecook "$template_file" a b c | assert_output "\
+got a b c
+"
+}
+
+test_linecook_assigns_field_defaults_according_to_properties_file () {
+cat > "$template_file" <<DOC
+got <%= xx %> <%= yy %> <%= zz %>
+DOC
+
+cat > "$properties_file" <<DOC
+fields:
+  xx: X
+  yy: Y
+  zz: Z
+DOC
+
+linecook "$template_file" a b | assert_output "\
+got a b Z
+"
+}
+
+test_linecook_recognizes_properties_in_lc_files () {
+cat > "$ts_test_dir/example.lc" <<DOC
+fields:
+  xx: X
+  yy: Y
+  zz: Z
+---
+got <%= xx %> <%= yy %> <%= zz %>
+DOC
+
+linecook "$ts_test_dir/example.lc" a b | assert_output "\
+got a b Z
 "
 }
 
 test_linecook_looks_up_template_file_along_LINECOOK_PATH () {
-setup_template_file "<%= 1 + 2 %>"
+printf "%s" "<%= 1 + 2 %>" > "$template_file"
 export LINECOOK_PATH="$ts_test_dir"
 linecook "$template_name" | assert_output "3"
 }
 
 test_linecook_can_find_template_files_under_dir () {
 mkdir -p "$ts_test_dir/dir"
-printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/template.erb"
-
+printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/$template_name.erb"
 export LINECOOK_PATH="$ts_test_dir"
-linecook dir/template | assert_output "3"
+linecook "dir/$template_name" | assert_output "3"
 }
 
 test_linecook_prints_error_if_template_cannot_be_found_on_LINECOOK_PATH () {
@@ -93,9 +119,7 @@ no template specified
 #
 
 test_linecook_f_renders_template_for_each_line_in_csv_inputs () {
-setup_template_file "\
-got <%= args.join(' ') %>
-"
+setup_fixture
 
 csv_file_one="$ts_test_dir/one.csv"
 printf "%s,%s,%s\n" a b c i j k > "$csv_file_one"
@@ -117,9 +141,8 @@ got x y z
 #
 
 test_linecook_F_sets_field_sep_for_csv_inputs () {
-setup_template_file "\
-got <%= args.join(' ') %>
-"
+setup_fixture
+
 printf "%s|%s|%s\n" a b c x y z |
 linecook -F '|' "$template_file" | assert_output "\
 got a b c
@@ -132,51 +155,41 @@ got x y z
 #
 
 test_linecook_H_specifies_each_csv_file_has_headers () {
-setup_template_file "\
-got <%= args.join(' ') %>
-"
+setup_fixture
 
 csv_file_one="$ts_test_dir/one.csv"
-printf "%s,%s,%s\n" A B C a b c i j k > "$csv_file_one"
+printf "%s,%s,%s\n" xx yy zz a b c d e f> "$csv_file_one"
 
 csv_file_two="$ts_test_dir/two.csv"
-printf "%s,%s,%s\n" A B C x y z > "$csv_file_two"
+printf "%s,%s,%s\n" xx yy zz k l m > "$csv_file_two"
 
-printf "%s,%s,%s\n" A B C p q r |
+printf "%s,%s,%s\n" xx yy zz h i j |
 linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
-got i j k
-got p q r
-got x y z
+got d e f
+got h i j
+got k l m
 "
 }
 
-test_linecook_H_maps_csv_fields_to_named_args_on_a_per_file_basis () {
-setup_template_file "\
-got <%= self.A %> <%= self.B %> <%= self.C %>
-"
-setup_attributes_file "\
-args:
-  A: a
-  B: b
-  C: c
-"
+test_linecook_H_maps_csv_fields_to_named_fields_on_a_per_file_basis () {
+setup_fixture_with_properties
 
 # extra fields
 csv_file_one="$ts_test_dir/one.csv"
-printf "%s,%s,%s,%s\n" A B C D a b c d i j k l > "$csv_file_one"
+printf "%s,%s,%s,%s\n" xx yy zz __ a b c _ d e f _ > "$csv_file_one"
 
 # out-of-order fields
 csv_file_two="$ts_test_dir/two.csv"
-printf "%s,%s,%s\n" B C A y z x > "$csv_file_two"
+printf "%s,%s,%s\n" yy zz xx l m k > "$csv_file_two"
 
 # missing fields
-printf "%s,%s\n" A B p q |
+printf "%s,%s\n" xx yy h i |
 linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c
-got i j k
-got p q c
-got x y z
+got d e f
+got h i Z
+got k l m
 "
 }
 
@@ -185,7 +198,7 @@ got x y z
 #
 
 test_linecook_I_sets_LINECOOK_PATH () {
-setup_template_file "<%= 1 + 2 %>"
+printf "%s" "<%= 1 + 2 %>" > "$template_file"
 linecook -I "$ts_test_dir" "$template_name" | assert_output "3"
 }
 
@@ -234,7 +247,7 @@ xyz
 "
 }
 
-test_linecook_l_prints_desc_as_in_attributes_file_if_present () {
+test_linecook_l_prints_desc_as_in_properties_file_if_present () {
 mkdir -p "$ts_test_dir"
 
 touch "$ts_test_dir/abc.erb"
