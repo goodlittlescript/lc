@@ -8,6 +8,7 @@ begin
   options = Linecook.options(
     :mode  => :render,
     :input => :csv,
+    :template_type => :file,
   )
   OptionParser.new do |opts|
     opts.banner = %{
@@ -27,6 +28,10 @@ options:
     opts.on("-a", "--attributes-file FILE", "attributes file") do |input|
       attrs = YAML.load_file(input)
       options[:attributes].merge!(attrs)
+    end
+
+    opts.on("-e", "set template from string") do
+      options[:template_type] = :string
     end
 
     opts.on("-F", "--field-sep FS", "field sep") do |input|
@@ -63,6 +68,7 @@ options:
 
   mode  = options[:mode]
   input = options[:input]
+  template_type = options[:template_type]
 
   config = Linecook.setup(options)
   template_file, *csv_files = ARGV; ARGV.clear
@@ -87,6 +93,14 @@ options:
     if template_file.nil?
       $stderr.puts "no template specified"
       exit 1
+    end
+
+    if template_type == :string
+      require 'tempfile'
+      tempfile = Tempfile.new("linecook")
+      tempfile.puts(template_file)
+      tempfile.close
+      template_file = tempfile.path
     end
 
     template = \

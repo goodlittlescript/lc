@@ -173,6 +173,20 @@ got d e f {V}
 }
 
 #
+# -e
+#
+
+test_linecook_e_provides_erb_template () {
+setup_fixture
+
+printf "%s,%s,%s\n" a b c d e f |
+linecook -e "$(cat "$template_file")" | assert_output "\
+got a b c {}
+got d e f {}
+"
+}
+
+#
 # -f
 #
 
