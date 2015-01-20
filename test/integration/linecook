@@ -141,6 +141,38 @@ no template specified
 }
 
 #
+# -A
+#
+
+test_linecook_A_sets_attribute () {
+setup_fixture_with_properties
+
+printf "%s,%s,%s\n" a b c d e f |
+linecook -A kk=V "$template_file" | assert_output "\
+got a b c {V}
+got d e f {V}
+"
+}
+
+#
+# -a
+#
+
+test_linecook_a_sets_attributes_from_file () {
+setup_fixture_with_properties
+
+cat > "$ts_test_dir/attrs.yml" <<DOC
+kk: V
+DOC
+
+printf "%s,%s,%s\n" a b c d e f |
+linecook -a "$ts_test_dir/attrs.yml" "$template_file" | assert_output "\
+got a b c {V}
+got d e f {V}
+"
+}
+
+#
 # -f
 #
 

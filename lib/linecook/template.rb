@@ -6,8 +6,9 @@ module Linecook
   class Template
     attr_reader :template_file
 
-    def initialize(template_file)
+    def initialize(template_file, attributes = {})
       @template_file = template_file
+      @attributes = attributes
     end
 
     def properties_file
@@ -32,7 +33,7 @@ module Linecook
     end
 
     def attrs
-      @attrs ||= properties.fetch("attrs") { {} }
+      @attrs ||= properties.fetch("attrs") { {} }.merge(@attributes)
     end
 
     def field_names=(field_names)

@@ -8,6 +8,7 @@ module Linecook
         {
           :path => ENV["LINECOOK_PATH"] || default_template_dirs.join(":"),
           :field_sep => ',',
+          :attributes => {},
         }.merge(overrides)
       end
 
@@ -19,6 +20,7 @@ module Linecook
         config[:template_dirs] = path.split(":")
         config[:field_sep] = options[:field_sep]
         config[:headers] = options[:headers]
+        config[:attributes] = options[:attributes]
 
         new(config)
       end
@@ -31,11 +33,13 @@ module Linecook
     attr_reader :template_dirs
     attr_reader :field_sep
     attr_reader :headers
+    attr_reader :attributes
 
     def initialize(config = {})
       @template_dirs  = config.fetch(:template_dirs) { [] }
       @field_sep      = config.fetch(:field_sep, ',')
       @headers        = config.fetch(:headers, nil)
+      @attributes     = config.fetch(:attributes) { {} }
     end
 
     def parser(source, field_names = nil)
@@ -61,7 +65,7 @@ module Linecook
           dir = File.expand_path(dir)
           Dir.glob(File.join(dir, "**/*.{erb,lc}")).each do |file|
             name = file[dir.length + 1, file.length - dir.length - 1 - File.extname(file).length]
-            template = Template.new(file)
+            template = Template.new(file, attributes)
             templates[name] ||= template
           end
         end
