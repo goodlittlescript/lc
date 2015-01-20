@@ -3,10 +3,13 @@ module Linecook
     class << self
       attr_accessor :defaults
 
-      def subclass(field_names)
+      def subclass(attr_names, field_names)
         method_defs = []
-        field_names.each_with_index do |field, i|
-          method_defs << "def #{field}; @fields[#{i}] || @defaults[#{i}]; end;"
+        attr_names.each do |name|
+          method_defs << "def #{name}; @attrs['#{name}']; end;"
+        end
+        field_names.each_with_index do |name, i|
+          method_defs << "def #{name}; @fields[#{i}] || @defaults[#{i}]; end;"
         end
 
         subclass = Class.new(self)  
@@ -15,9 +18,11 @@ module Linecook
       end
     end
 
+    attr_reader :attrs
     attr_reader :fields
 
-    def initialize(fields, defaults)
+    def initialize(attrs, fields, defaults)
+      @attrs  = attrs
       @fields = fields
       @defaults = defaults
     end

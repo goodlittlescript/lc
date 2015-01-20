@@ -31,6 +31,10 @@ module Linecook
       end
     end
 
+    def attrs
+      @attrs ||= properties.fetch("attrs") { {} }
+    end
+
     def field_names=(field_names)
       @field_names = field_names
     end
@@ -59,11 +63,11 @@ module Linecook
     end
 
     def context_class
-      @context_class ||= Context.subclass(field_names)
+      @context_class ||= Context.subclass(attrs.keys, field_names)
     end
 
     def context(fields)
-      context_class.new(fields, default_fields.values)
+      context_class.new(attrs, fields, default_fields.values)
     end
 
     def text

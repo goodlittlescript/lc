@@ -11,16 +11,18 @@ properties_file="$ts_test_dir/$template_name.yml"
 
 setup_fixture () {
 cat > "$template_file" <<DOC
-got <%= fields.join(' ') %>
+got <%= fields.join(' ') %> {<%= attrs.to_a.map {|kv| kv.join('=') }.join(' ') %>}
 DOC
 }
 
 setup_fixture_with_properties () {
 cat > "$template_file" <<DOC
-got <%= xx %> <%= yy %> <%= zz %>
+got <%= xx %> <%= yy %> <%= zz %> {<%= kk %>}
 DOC
 
 cat > "$properties_file" <<DOC
+attrs:
+  kk: v
 fields:
   xx: X
   yy: Y
@@ -43,10 +45,10 @@ printf "%s,%s,%s\n" x y z > "$csv_file_two"
 
 printf "%s,%s,%s\n" p q r |
 linecook "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
-got a b c
-got i j k
-got p q r
-got x y z
+got a b c {}
+got i j k {}
+got p q r {}
+got x y z {}
 "
 }
 
@@ -78,6 +80,22 @@ DOC
 
 printf "%s,%s\n" a b | linecook "$template_file" | assert_output "\
 got a b Z
+"
+}
+
+test_linecook_assigns_attribute_defaults_according_to_properties_file () {
+cat > "$template_file" <<DOC
+got <%= fields.join(' ') %> <%= kk %>
+DOC
+
+cat > "$properties_file" <<DOC
+attrs:
+  kk: v
+DOC
+
+printf "%s,%s\n" a b c d | linecook "$template_file" | assert_output "\
+got a b v
+got c d v
 "
 }
 
@@ -145,8 +163,8 @@ setup_fixture
 
 printf "%s|%s|%s\n" a b c x y z |
 linecook -F '|' "$template_file" | assert_output "\
-got a b c
-got x y z
+got a b c {}
+got x y z {}
 "
 }
 
@@ -165,10 +183,10 @@ printf "%s,%s,%s\n" xx yy zz k l m > "$csv_file_two"
 
 printf "%s,%s,%s\n" xx yy zz h i j |
 linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
-got a b c
-got d e f
-got h i j
-got k l m
+got a b c {}
+got d e f {}
+got h i j {}
+got k l m {}
 "
 }
 
@@ -186,10 +204,10 @@ printf "%s,%s,%s\n" yy zz xx l m k > "$csv_file_two"
 # missing fields
 printf "%s,%s\n" xx yy h i |
 linecook -H "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
-got a b c
-got d e f
-got h i Z
-got k l m
+got a b c {v}
+got d e f {v}
+got h i Z {v}
+got k l m {v}
 "
 }
 
