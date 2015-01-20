@@ -41,6 +41,12 @@ options:
       options[:headers] = true
     end
 
+    opts.on("-h", "--help", "print this help") do
+      puts opts
+      puts
+      exit
+    end
+
     opts.on("-I", "--path LC_PATH", "set template search path") do |input|
       options[:path] = input
     end
@@ -51,12 +57,6 @@ options:
 
     opts.on("-l", "--list", "list templates") do
       options[:mode] = :list
-    end
-
-    opts.on("-h", "--help", "print this help") do
-      puts opts
-      puts
-      exit
     end
 
   end.parse!
