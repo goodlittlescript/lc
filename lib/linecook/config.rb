@@ -26,7 +26,7 @@ module Linecook
       end
 
       def default_template_dirs
-        ["~/.lc", "/etc/lc"]
+        ["~/.linecook", "/etc/linecook"]
       end
     end
 
