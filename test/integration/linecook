@@ -267,10 +267,21 @@ linecook -f -I "$ts_test_dir" "$template_name" | assert_output "3"
 }
 
 #
-# -L
+# -l
 #
 
-test_linecook_L_prints_list_of_matching_templates_on_LINECOOK_PATH () {
+test_linecook_l_prints_list_of_templates_on_LINECOOK_PATH () {
+mkdir -p "$ts_test_dir/x/y"
+touch "$ts_test_dir/abc.erb"
+touch "$ts_test_dir/x/y/z.erb"
+export LINECOOK_PATH="$ts_test_dir"
+linecook -l | assert_output "\
+abc
+x/y/z
+"
+}
+
+test_linecook_l_prints_list_of_matching_templates_on_LINECOOK_PATH () {
 mkdir -p "$ts_test_dir"
 touch "$ts_test_dir/abc.erb"
 touch "$ts_test_dir/abd.erb"
@@ -278,56 +289,9 @@ touch "$ts_test_dir/a.erb"
 touch "$ts_test_dir/ax.erb"
 
 export LINECOOK_PATH="$ts_test_dir"
-linecook -L ab | assert_output "\
+linecook -l ab | assert_output "\
 abc
 abd
-"
-}
-
-test_linecook_L_prints_all_templates_if_no_template_is_specified () {
-mkdir -p "$ts_test_dir"
-touch "$ts_test_dir/abc.erb"
-touch "$ts_test_dir/xyz.erb"
-
-export LINECOOK_PATH="$ts_test_dir"
-linecook -L | assert_output "\
-abc
-xyz
-"
-}
-
-#
-# -l
-#
-
-test_linecook_l_prints_list_of_templates_on_LINECOOK_PATH () {
-mkdir -p "$ts_test_dir"
-touch "$ts_test_dir/abc.erb"
-touch "$ts_test_dir/xyz.erb"
-export LINECOOK_PATH="$ts_test_dir"
-linecook -l | assert_output "\
-abc
-xyz
-"
-}
-
-test_linecook_l_prints_desc_as_in_properties_file_if_present () {
-mkdir -p "$ts_test_dir"
-
-touch "$ts_test_dir/abc.erb"
-cat > "$ts_test_dir/abc.yml" <<DOC
-desc: "the abc template"
-DOC
-
-touch "$ts_test_dir/xyz.erb"
-cat > "$ts_test_dir/xyz.yml" <<DOC
-# no desc
-DOC
-
-export LINECOOK_PATH="$ts_test_dir"
-linecook -l | assert_output "\
-abc    the abc template
-xyz
 "
 }
 
