@@ -4,7 +4,7 @@ _linecook() {
   # tries to do -L completions on the first word only
   word=${COMP_WORDS[COMP_CWORD]}
   template=${COMP_WORDS[@]:1}
-  words="$(linecook -l "${template}" | grep -v "^${template}")"
+  words="$(linecook -l "${template}")"
 
   if [ -n "$words" ]
   then COMPREPLY=( $(compgen -W "$words" -- "$word") )

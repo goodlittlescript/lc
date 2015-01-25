@@ -73,7 +73,7 @@ options:
   when :list
     config.templates.each_pair do |name, template|
       if template_file.nil? || name.index(template_file) == 0
-        puts name
+        puts name unless template_file == name
       end
     end
 
