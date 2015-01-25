@@ -20,12 +20,12 @@ options:
 
 }.lstrip
 
-    opts.on("-A", "--attribute KEY=VALUE", "set attribute") do |input|
+    opts.on("-A", "--attribute KEY=VALUE", "set an attribute") do |input|
       key, value = input.split("=")
       options[:attributes][key] = value
     end
 
-    opts.on("-a", "--attributes-file FILE", "attributes file") do |input|
+    opts.on("-a", "--attributes-file FILE", "set attributes from file") do |input|
       attrs = YAML.load_file(input)
       options[:attributes].merge!(attrs)
     end
@@ -34,15 +34,15 @@ options:
       options[:template_type] = :string
     end
 
-    opts.on("-F", "--field-sep FS", "field sep") do |input|
+    opts.on("-F", "--field-sep FS", "csv field sep") do |input|
       options[:field_sep] = input
     end
 
-    opts.on("-f", "--fields", "read fields from args") do
+    opts.on("-f", "--fields", "treat csv files as fields") do
       options[:input] = :fields
     end
 
-    opts.on("-H", "--headers", "map headers to fields") do
+    opts.on("-H", "--headers", "map csv headers to fields") do
       options[:headers] = true
     end
 
@@ -52,7 +52,7 @@ options:
       exit
     end
 
-    opts.on("-I", "--path LC_PATH", "set template search path") do |input|
+    opts.on("-I", "--path LINECOOK_PATH", "set template search path") do |input|
       options[:path] = input
     end
 

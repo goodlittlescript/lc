@@ -1,0 +1,214 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "LINECOOK" "1" "January 2014" "0.0.0" ""
+.
+.SH "NAME"
+\fBlinecook\fR \- render ERB templates
+.
+.SH "SYNOPSIS"
+\fBlinecook\fR \fIoptions\fR TEMPLATE CSV_FILES\.\.\.
+.
+.SH "DESCRIPTION"
+\fBlinecook\fR renders ERB templates from csv files, once per row\. Templates can specify named arguments, defaults, and are simple enough to serve as recipes for all the little things\.
+.
+.SH "OPTIONS"
+These options control how \fBlinecook\fR operates\.
+.
+.TP
+\fB\-A\fR, \fB\-\-attribute KEY=VALUE\fR
+Sets an attribute by key\.
+.
+.TP
+\fB\-a\fR, \fB\-\-attributes\-file FILE\fR
+Set attributes from a YAML file\.
+.
+.TP
+\fB\-e\fR
+Treat TEMPLATE as the template string\.
+.
+.TP
+\fB\-F\fR, \fB\-\-field\-sep FS\fR
+The CSV file field sep\.
+.
+.TP
+\fB\-f\fR, \fB\-\-fields\fR
+Treat CSV_FILES as fields\.
+.
+.TP
+\fB\-H\fR, \fB\-\-headers\fR
+Indicates that the CSV_FILES have header rows\. If field names are set in the template then map fields where the head\- ers and field names match\.
+.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints help\.
+.
+.TP
+\fB\-I\fR, \fB\-\-path LINECOOK_PATH\fR
+Set the template search path\.
+.
+.TP
+\fB\-l\fR, \fB\-\-list\fR
+List templates along LINECOOK_PATH that match the current TEMPLATE\. If not TEMPLATE is provided then all templates are listed\.
+.
+.SH "USAGE"
+Templates are ruby ERB\. When rendered the template can access the fields of each record in the csv file as the Array \fBfields\fR and global attributes as the Hash \fBattrs\fR\.
+.
+.IP "" 4
+.
+.nf
+
+printf \'%s\en\' \'got <%= fields\.inspect %> <%= attrs\.inspect %>\' > example\.erb
+printf \'%s,%s,%s\en\' a b c x y z > example\.csv
+linecook example\.erb example\.csv
+# got ["a", "b", "c"] {}
+# got ["x", "y", "z"] {}
+.
+.fi
+.
+.IP "" 0
+.
+.P
+No specific extname is needed for a template file, but if the extname is \fB\.erb\fR then \fBlinecook\fR will look for a YAML properties file with the same name but with a \fB\.yml\fR extname\. The properties file can specify default attrs, field names/defaults, template documentation, etc\. With properties \fBlinecook\fR can map fields by header, and provide the template with variables to access named attrs and fields\.
+.
+.IP "" 4
+.
+.nf
+
+cat > example\.erb <<DOC
+got A=<%= a %> B=<%= b %> (<%= key %>)
+DOC
+
+cat > example\.yml <<DOC
+attrs:
+  key: value
+fields:
+  a: A
+  b: 1
+DOC
+
+printf \'%s,%s\en\' 1 2 3 4 > example\.csv
+
+linecook example\.erb example\.csv
+# got A=1 B=2 (value)
+# got A=4 B=4 (value)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Both files can be combined in the \fB\.lc\fR format wherein the properties are expressed in a section separated from the template by \'\-\-\-\'\.
+.
+.IP "" 4
+.
+.nf
+
+cat > example\.lc <<DOC
+attrs:
+  key: value
+fields:
+  a: A
+  b: 1
+\-\-\-
+got A=<%= a %> B=<%= b %> (<%= key %>)
+DOC
+
+linecook example\.lc example\.csv
+# got A=1 B=2 (value)
+# got A=4 B=4 (value)
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Note the \fB\.lc\fR format is shebang\-friendly\.
+.
+.IP "" 4
+.
+.nf
+
+cat > example <<DOC
+#!/usr/bin/env linecook
+$(cat example\.lc)
+DOC
+chmod +x example
+
+\[char46]/example example\.csv
+# got A=1 B=2 (value)
+# got A=4 B=4 (value)
+.
+.fi
+.
+.IP "" 0
+.
+.SH "ENVIRONMENT"
+The behavior of \fBlinecook\fR can be modified via environment variables\. Many of these may be set using options\.
+.
+.TP
+\fBLINECOOK_PATH\fR (~/\.linecook:/etc/linecook)
+The path for looking up templates\.
+.
+.P
+\fBlinecook\fR reserves all variables starting with \'LINECOOK_\' for internal use\.
+.
+.SH "INSTALLATION"
+Add \fBlinecook\fR to your PATH (or execute it directly)\. A nice way of doing so is to clone the repo and add the bin dir to PATH\. This allows easy updates via \fBgit pull\fR and should make the manpages available via \fBman linecook\fR\.
+.
+.IP "" 4
+.
+.nf
+
+git clone git://github\.com/goodlittlescript/linecook\.git
+export PATH="$PWD/linecook/bin:$PATH"
+.
+.fi
+.
+.IP "" 0
+.
+.P
+If you\'re using homebrew \fIhttp://brew\.sh/\fR on OSX you can tap goodlittlescript \fIhttps://github\.com/goodlittlescript/homebrew\-gls\fR\.
+.
+.IP "" 4
+.
+.nf
+
+brew tap goodlittlescript/homebrew\-gls
+brew install linecook
+.
+.fi
+.
+.IP "" 0
+.
+.SH "DEVELOPMENT"
+Clone the repo as above\. To run the tests (written in \fBts\fR \- see https://github\.com/thinkerbot/ts for installation instruction):
+.
+.IP "" 4
+.
+.nf
+
+\[char46]/test/suite
+.
+.fi
+.
+.IP "" 0
+.
+.P
+To generate the manpages:
+.
+.IP "" 4
+.
+.nf
+
+rake manpages
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Report bugs here: http://github\.com/goodlittlescript/linecook/issues\.
+.
+.SH "COPYRIGHT"
+Linecook is Copyright (C) 2015 Simon Chiang \fIhttp://github\.com/thinkerbot\fR

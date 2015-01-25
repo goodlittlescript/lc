@@ -15,16 +15,34 @@ recipes for all the little things.
 
 These options control how `linecook` operates.
 
-    -F, --field-sep FS               field sep for csv inputs (assumes -f)
-    -f, --csv-file                   read args from csv inputs
-    -H, --headers                    map csv headers to args
-    -I, --path LC_PATH               set template search path
-    -L, --list-filter                list filtering for matches
-    -l, --list                       list templates
-    -h, --help                       print this help
-    
-* `-h`:
+* `-A`, `--attribute KEY=VALUE`:
+  Sets an attribute by key.
+
+* `-a`, `--attributes-file FILE`:
+  Set attributes from a YAML file.
+
+* `-e`:
+  Treat TEMPLATE as the template string.
+
+* `-F`, `--field-sep FS`:
+  The CSV file field sep.
+
+* `-f`, `--fields`:
+  Treat CSV_FILES as fields.
+
+* `-H`, ` --headers`:
+   Indicates that the CSV_FILES have header rows. If field names are set in
+   the template then map fields where the head- ers and field names match.
+
+* `-h`, `--help`:
   Prints help.
+
+* `-I`, `--path LINECOOK_PATH`:
+  Set the template search path.
+
+* `-l`, ` --list`:
+   List templates along LINECOOK_PATH that match the current TEMPLATE. If
+   not TEMPLATE is provided then all templates are listed.
 
 ## USAGE
 
@@ -82,6 +100,16 @@ expressed in a section separated from the template by '---'.
 
 Note the `.lc` format is shebang-friendly.
 
+    cat > example <<DOC
+    #!/usr/bin/env linecook
+    $(cat example.lc)
+    DOC
+    chmod +x example
+
+    ./example example.csv
+    # got A=1 B=2 (value)
+    # got A=4 B=4 (value)
+
 ## ENVIRONMENT
 
 The behavior of **linecook** can be modified via environment variables. Many
@@ -116,7 +144,7 @@ https://github.com/thinkerbot/ts for installation instruction):
 
 To generate the manpages:
 
-    make manpages
+    rake manpages
 
 Report bugs here: http://github.com/goodlittlescript/linecook/issues.
 
