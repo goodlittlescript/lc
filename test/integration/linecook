@@ -34,21 +34,13 @@ DOC
 # linecook tests
 #
 
-test_linecook_f_renders_template_for_each_line_in_csv_inputs () {
-setup_fixture
+test_linecook_renders_file_with_arguments_as_fields () {
+cat > "$template_file" <<DOC
+got <%= fields.join(' ') %>
+DOC
 
-csv_file_one="$ts_test_dir/one.csv"
-printf "%s,%s,%s\n" a b c i j k > "$csv_file_one"
-
-csv_file_two="$ts_test_dir/two.csv"
-printf "%s,%s,%s\n" x y z > "$csv_file_two"
-
-printf "%s,%s,%s\n" p q r |
-linecook "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
-got a b c {}
-got i j k {}
-got p q r {}
-got x y z {}
+linecook "$template_file" a b c | assert_output "\
+got a b c
 "
 }
 
@@ -61,7 +53,7 @@ cat > "$properties_file" <<DOC
 fields: [xx, yy, zz]
 DOC
 
-printf "%s,%s,%s\n" a b c | linecook "$template_file" | assert_output "\
+linecook "$template_file" a b c | assert_output "\
 got a b c
 "
 }
@@ -78,7 +70,7 @@ fields:
   zz: Z
 DOC
 
-printf "%s,%s\n" a b | linecook "$template_file" | assert_output "\
+linecook "$template_file" a b | assert_output "\
 got a b Z
 "
 }
@@ -93,9 +85,8 @@ attrs:
   kk: v
 DOC
 
-printf "%s,%s\n" a b c d | linecook "$template_file" | assert_output "\
+linecook "$template_file" a b | assert_output "\
 got a b v
-got c d v
 "
 }
 
@@ -109,7 +100,7 @@ fields:
 got <%= xx %> <%= yy %> <%= zz %>
 DOC
 
-printf "%s,%s\n" a b | linecook "$ts_test_dir/example.lc" | assert_output "\
+linecook "$ts_test_dir/example.lc" a b | assert_output "\
 got a b Z
 "
 }
@@ -117,14 +108,14 @@ got a b Z
 test_linecook_looks_up_template_file_along_LINECOOK_PATH () {
 printf "%s" "<%= 1 + 2 %>" > "$template_file"
 export LINECOOK_PATH="$ts_test_dir"
-linecook -f "$template_name" | assert_output "3"
+linecook "$template_name" | assert_output "3"
 }
 
 test_linecook_can_find_template_files_under_dir () {
 mkdir -p "$ts_test_dir/dir"
 printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/$template_name.erb"
 export LINECOOK_PATH="$ts_test_dir"
-linecook -f "dir/$template_name" | assert_output "3"
+linecook "dir/$template_name" | assert_output "3"
 }
 
 test_linecook_prints_error_if_template_cannot_be_found_on_LINECOOK_PATH () {
@@ -147,10 +138,8 @@ no template specified
 test_linecook_A_sets_attribute () {
 setup_fixture_with_properties
 
-printf "%s,%s,%s\n" a b c d e f |
-linecook -A kk=V "$template_file" | assert_output "\
+linecook -A kk=V "$template_file" a b c | assert_output "\
 got a b c {V}
-got d e f {V}
 "
 }
 
@@ -165,10 +154,8 @@ cat > "$ts_test_dir/attrs.yml" <<DOC
 kk: V
 DOC
 
-printf "%s,%s,%s\n" a b c d e f |
-linecook -a "$ts_test_dir/attrs.yml" "$template_file" | assert_output "\
+linecook -a "$ts_test_dir/attrs.yml" "$template_file" a b c | assert_output "\
 got a b c {V}
-got d e f {V}
 "
 }
 
@@ -179,10 +166,8 @@ got d e f {V}
 test_linecook_e_provides_erb_template () {
 setup_fixture
 
-printf "%s,%s,%s\n" a b c d e f |
-linecook -e "$(cat "$template_file")" | assert_output "\
+linecook -e "$(cat "$template_file")" a b c | assert_output "\
 got a b c {}
-got d e f {}
 "
 }
 
@@ -190,13 +175,21 @@ got d e f {}
 # -f
 #
 
-test_linecook_f_renders_file_with_arguments_as_fields () {
-cat > "$template_file" <<DOC
-got <%= fields.join(' ') %>
-DOC
+test_linecook_f_renders_template_for_each_line_in_csv_inputs () {
+setup_fixture
 
-linecook -f "$template_file" a b c | assert_output "\
-got a b c
+csv_file_one="$ts_test_dir/one.csv"
+printf "%s,%s,%s\n" a b c i j k > "$csv_file_one"
+
+csv_file_two="$ts_test_dir/two.csv"
+printf "%s,%s,%s\n" x y z > "$csv_file_two"
+
+printf "%s,%s,%s\n" p q r |
+linecook -f "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+got a b c {}
+got i j k {}
+got p q r {}
+got x y z {}
 "
 }
 
@@ -263,7 +256,7 @@ got k l m {v}
 
 test_linecook_I_sets_LINECOOK_PATH () {
 printf "%s" "<%= 1 + 2 %>" > "$template_file"
-linecook -f -I "$ts_test_dir" "$template_name" | assert_output "3"
+linecook -I "$ts_test_dir" "$template_name" | assert_output "3"
 }
 
 #

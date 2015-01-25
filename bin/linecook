@@ -7,12 +7,12 @@ begin
 
   options = Linecook.options(
     :mode  => :render,
-    :input => :csv,
+    :input => :fields,
     :template_type => :file,
   )
   OptionParser.new do |opts|
     opts.banner = %{
-usage: linecook [options] TEMPLATE CSV_FILES...
+usage: linecook [options] TEMPLATE FIELDS...
 
   Render ERB templates.
 
@@ -34,15 +34,17 @@ options:
       options[:template_type] = :string
     end
 
-    opts.on("-F", "--field-sep FS", "csv field sep") do |input|
+    opts.on("-F", "--field-sep FS", "csv field sep (assumes -f)") do |input|
+      options[:input] = :csv_files
       options[:field_sep] = input
     end
 
-    opts.on("-f", "--fields", "treat csv files as fields") do
-      options[:input] = :fields
+    opts.on("-f", "--csv-files", "treat fields as csv files") do
+      options[:input] = :csv_files
     end
 
-    opts.on("-H", "--headers", "map csv headers to fields") do
+    opts.on("-H", "--headers", "map csv headers to fields (assumes -f)") do
+      options[:input] = :csv_files
       options[:headers] = true
     end
 
@@ -67,7 +69,7 @@ options:
   template_type = options[:template_type]
 
   config = Linecook.setup(options)
-  template_file, *csv_files = ARGV; ARGV.clear
+  template_file, *fields = ARGV; ARGV.clear
 
   case mode
   when :list
@@ -105,9 +107,10 @@ options:
 
     case input
     when :fields
-      fields = csv_files
       print template.result(fields)
-    when :csv
+    when :csv_files
+      csv_files = fields
+
       if csv_files.empty?
         csv_files << "-" 
       end

@@ -3,13 +3,12 @@ linecook(1) -- render ERB templates
 
 ## SYNOPSIS
 
-`linecook` [options] TEMPLATE CSV_FILES...
+`linecook` [options] TEMPLATE FIELDS...
 
 ## DESCRIPTION
 
-**linecook** renders ERB templates from csv files, once per row.  Templates
-can specify named arguments, defaults, and are simple enough to serve as
-recipes for all the little things.
+**linecook** renders ERB templates.  Templates can specify named arguments,
+defaults, and are simple enough to serve as recipes for all the little things.
 
 ## OPTIONS
 
@@ -25,14 +24,15 @@ These options control how `linecook` operates.
   Treat TEMPLATE as the template string.
 
 * `-F`, `--field-sep FS`:
-  The CSV file field sep.
+  The csv field sep. (assumes -f)
 
-* `-f`, `--fields`:
-  Treat CSV_FILES as fields.
+* `-f`, `--csv-files`:
+  Treat FIELDS as csv files.
 
 * `-H`, ` --headers`:
-   Indicates that the CSV_FILES have header rows. If field names are set in
-   the template then map fields where the head- ers and field names match.
+   Indicates that csv files have header rows. If field names are set in the
+   template then map fields where the head- ers and field names match.
+   (assumes -f)
 
 * `-h`, `--help`:
   Prints help.
