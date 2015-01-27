@@ -105,6 +105,21 @@ got a b Z
 "
 }
 
+test_linecook_can_set_ERB_trim_mode_in_properties () {
+cat > "$ts_test_dir/example.lc" <<DOC
+trim: '%'
+---
+% a = 1
+% b = 2
+% c = 1 + 2
+<%= a %> + <%= b %> = <%= c %>
+DOC
+
+linecook "$ts_test_dir/example.lc" | assert_output "\
+1 + 2 = 3
+"
+}
+
 test_linecook_looks_up_template_file_along_LINECOOK_PATH () {
 printf "%s" "<%= 1 + 2 %>" > "$template_file"
 export LINECOOK_PATH="$ts_test_dir"

@@ -39,7 +39,7 @@ module Linecook
     def filename_erb
       @filename_erb ||= begin
         template = properties.fetch("filename", "<%= __template_name__ %>")
-        erb = ERB.new(template)
+        erb = ERB.new(template, nil, trim_mode)
         erb.filename = template_file + " (filename)"
         erb
       end
@@ -51,6 +51,10 @@ module Linecook
 
     def mode
       properties.fetch("mode", nil)
+    end
+
+    def trim_mode
+      properties.fetch("trim", "<>")
     end
 
     def field_names=(field_names)
@@ -101,7 +105,7 @@ module Linecook
 
     def erb
       @erb ||= begin
-        erb = ERB.new(text)
+        erb = ERB.new(text, nil, trim_mode)
         erb.filename = template_file
         erb
       end
