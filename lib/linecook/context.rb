@@ -21,10 +21,19 @@ module Linecook
     attr_reader :attrs
     attr_reader :fields
 
-    def initialize(attrs, fields, defaults)
+    def initialize(attrs, fields, defaults, template_file)
       @attrs  = attrs
       @fields = fields
       @defaults = defaults
+      @template_file = template_file
+    end
+
+    def __template_file__
+      @template_file
+    end
+
+    def __template_name__
+      ::File.basename(__template_file__).chomp(::File.extname(__template_file__))
     end
 
     def __render__(erb)

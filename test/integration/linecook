@@ -296,4 +296,29 @@ test_linecook_h_prints_help () {
 linecook -h | grep -q "usage: linecook"
 }
 
+#
+# -o
+#
+
+test_linecook_o_creates_file_in_specified_dir () {
+setup_fixture
+linecook -o "$ts_test_dir" "$template_file" a b c
+cat "$ts_test_dir/$template_name" | assert_output "\
+got a b c {}
+"
+}
+
+test_linecook_o_creates_file_with_according_to_filename_and_mode () {
+cat > "$ts_test_dir/template.lc" <<DOC
+filename: "<%= __template_name__.reverse %>.txt"
+mode: 0600
+---
+DOC
+
+linecook -o "$ts_test_dir" "$ts_test_dir/template.lc" a b c
+ls -la "$ts_test_dir/etalpmet.txt" | awk '{ print $1 }' | assert_output "\
+-rw-------
+" 
+}
+
 . ts

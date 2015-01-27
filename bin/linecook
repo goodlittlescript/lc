@@ -62,6 +62,10 @@ options:
       options[:mode] = :list
     end
 
+    opts.on("-o", "--output-dir DIR", "output result to dir") do |input|
+      options[:output_dir] = input
+    end
+
   end.parse!
 
   mode  = options[:mode]
@@ -105,22 +109,24 @@ options:
       exit 1
     end
 
-    case input
-    when :fields
-      print template.result(fields)
-    when :csv_files
-      csv_files = fields
+    config.output(template) do |io|
+      case input
+      when :fields
+        io.print template.result(fields)
+      when :csv_files
+        csv_files = fields
 
-      if csv_files.empty?
-        csv_files << "-" 
-      end
+        if csv_files.empty?
+          csv_files << "-" 
+        end
 
-      csv_files.each do |file|
-        file = 0 if file == "-"
-        File.open(file) do |source|
-          parser = config.parser(source, template.field_names)
-          while fields = parser.gets
-            print template.result(fields)
+        csv_files.each do |file|
+          file = 0 if file == "-"
+          File.open(file) do |source|
+            parser = config.parser(source, template.field_names)
+            while fields = parser.gets
+              io.print template.result(fields)
+            end
           end
         end
       end

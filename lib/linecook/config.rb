@@ -1,5 +1,6 @@
 require 'linecook/template'
 require 'linecook/parser'
+require 'fileutils'
 
 module Linecook
   class Config
@@ -9,6 +10,7 @@ module Linecook
           :path => ENV["LINECOOK_PATH"] || default_template_dirs.join(":"),
           :field_sep => ',',
           :attributes => {},
+          :output_dir => nil,
         }.merge(overrides)
       end
 
@@ -21,6 +23,7 @@ module Linecook
         config[:field_sep] = options[:field_sep]
         config[:headers] = options[:headers]
         config[:attributes] = options[:attributes]
+        config[:output_dir] = options[:output_dir]
 
         new(config)
       end
@@ -34,12 +37,14 @@ module Linecook
     attr_reader :field_sep
     attr_reader :headers
     attr_reader :attributes
+    attr_reader :output_dir
 
     def initialize(config = {})
       @template_dirs  = config.fetch(:template_dirs) { [] }
       @field_sep      = config.fetch(:field_sep, ',')
       @headers        = config.fetch(:headers, nil)
       @attributes     = config.fetch(:attributes) { {} }
+      @output_dir     = config.fetch(:output_dir, nil)
     end
 
     def parser(source, field_names = nil)
@@ -70,6 +75,25 @@ module Linecook
           end
         end
         templates
+      end
+    end
+
+    def output(template, &block)
+      if output_dir
+        output_file = File.expand_path(template.filename, output_dir)
+        parent_dir  = File.dirname(output_file)
+
+        unless File.exists?(parent_dir)
+          FileUtils.mkdir_p(parent_dir)
+        end
+
+        File.open(output_file, "w", &block)
+
+        if mode = template.mode
+          FileUtils.chmod(mode, output_file)
+        end
+      else
+        yield $stdout
       end
     end
   end

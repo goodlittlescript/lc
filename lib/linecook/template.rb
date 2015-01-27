@@ -36,6 +36,23 @@ module Linecook
       @attrs ||= properties.fetch("attrs") { {} }.merge(@attributes)
     end
 
+    def filename_erb
+      @filename_erb ||= begin
+        template = properties.fetch("filename", "<%= __template_name__ %>")
+        erb = ERB.new(template)
+        erb.filename = template_file + " (filename)"
+        erb
+      end
+    end
+
+    def filename
+      context([]).__render__(filename_erb)
+    end
+
+    def mode
+      properties.fetch("mode", nil)
+    end
+
     def field_names=(field_names)
       @field_names = field_names
     end
@@ -68,7 +85,7 @@ module Linecook
     end
 
     def context(fields)
-      context_class.new(attrs, fields, default_fields.values)
+      context_class.new(attrs, fields, default_fields.values, template_file)
     end
 
     def text
