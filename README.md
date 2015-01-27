@@ -56,39 +56,15 @@ Templates are ruby ERB.  When rendered the template can access the fields of
 each record in the csv file as the Array `fields` and global attributes as the
 Hash `attrs`.
 
-    printf '%s\n' 'got <%= fields.inspect %> <%= attrs.inspect %>' > example.erb
+    printf '%s\n' 'got <%= fields.inspect %> <%= attrs.inspect %>' > example.lc
     printf '%s,%s,%s\n' a b c x y z > example.csv
-    linecook example.erb example.csv
+    linecook example.lc example.csv
     # got ["a", "b", "c"] {}
     # got ["x", "y", "z"] {}
 
-No specific extname is needed for a template file, but if the extname is
-`.erb` then `linecook` will look for a YAML properties file with the same name
-but with a `.yml` extname.  The properties file can specify default attrs,
-field names/defaults, template documentation, etc.  With properties `linecook`
-can map fields by header, and provide the template with variables to access
-named attrs and fields.
-
-    cat > example.erb <<DOC
-    got A=<%= a %> B=<%= b %> (<%= key %>)
-    DOC
-
-    cat > example.yml <<DOC
-    attrs:
-      key: value
-    fields:
-      a: A
-      b: 1
-    DOC
-
-    printf '%s,%s\n' 1 2 3 4 > example.csv
-
-    linecook example.erb example.csv
-    # got A=1 B=2 (value)
-    # got A=4 B=4 (value)
-
-Both files can be combined in the `.lc` format wherein the properties are
-expressed in a section separated from the template by '---'.
+Templates can specify properties as YAML front- matter. Properties change the
+rendering behavior of templates, for instance by providing named attrs and
+fields.
 
     cat > example.lc <<DOC
     attrs:
@@ -99,6 +75,8 @@ expressed in a section separated from the template by '---'.
     ---
     got A=<%= a %> B=<%= b %> (<%= key %>)
     DOC
+
+    printf '%s,%s\n' 1 2 3 4 > example.csv
 
     linecook example.lc example.csv
     # got A=1 B=2 (value)

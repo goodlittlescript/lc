@@ -5,8 +5,7 @@ setup () {
 mkdir -p "$ts_test_dir"
 
 template_name="example"
-template_file="$ts_test_dir/$template_name.erb"
-properties_file="$ts_test_dir/$template_name.yml"
+template_file="$ts_test_dir/$template_name.lc"
 }
 
 setup_fixture () {
@@ -17,16 +16,14 @@ DOC
 
 setup_fixture_with_properties () {
 cat > "$template_file" <<DOC
-got <%= xx %> <%= yy %> <%= zz %> {<%= kk %>}
-DOC
-
-cat > "$properties_file" <<DOC
 attrs:
   kk: v
 fields:
   xx: X
   yy: Y
   zz: Z
+---
+got <%= xx %> <%= yy %> <%= zz %> {<%= kk %>}
 DOC
 }
 
@@ -44,54 +41,8 @@ got a b c
 "
 }
 
-test_linecook_assigns_field_names_according_to_properties_file () {
+test_linecook_assigns_fields_according_to_properties () {
 cat > "$template_file" <<DOC
-got <%= xx %> <%= yy %> <%= zz %>
-DOC
-
-cat > "$properties_file" <<DOC
-fields: [xx, yy, zz]
-DOC
-
-linecook "$template_file" a b c | assert_output "\
-got a b c
-"
-}
-
-test_linecook_assigns_field_defaults_according_to_properties_file () {
-cat > "$template_file" <<DOC
-got <%= xx %> <%= yy %> <%= zz %>
-DOC
-
-cat > "$properties_file" <<DOC
-fields:
-  xx: X
-  yy: Y
-  zz: Z
-DOC
-
-linecook "$template_file" a b | assert_output "\
-got a b Z
-"
-}
-
-test_linecook_assigns_attribute_defaults_according_to_properties_file () {
-cat > "$template_file" <<DOC
-got <%= fields.join(' ') %> <%= kk %>
-DOC
-
-cat > "$properties_file" <<DOC
-attrs:
-  kk: v
-DOC
-
-linecook "$template_file" a b | assert_output "\
-got a b v
-"
-}
-
-test_linecook_recognizes_properties_in_lc_files () {
-cat > "$ts_test_dir/example.lc" <<DOC
 fields:
   xx: X
   yy: Y
@@ -100,13 +51,26 @@ fields:
 got <%= xx %> <%= yy %> <%= zz %>
 DOC
 
-linecook "$ts_test_dir/example.lc" a b | assert_output "\
+linecook "$template_file" a b | assert_output "\
 got a b Z
 "
 }
 
+test_linecook_assigns_attribute_according_to_properties () {
+cat > "$template_file" <<DOC
+attrs:
+  kk: v
+---
+got <%= fields.join(' ') %> <%= kk %>
+DOC
+
+linecook "$template_file" a b | assert_output "\
+got a b v
+"
+}
+
 test_linecook_can_set_ERB_trim_mode_in_properties () {
-cat > "$ts_test_dir/example.lc" <<DOC
+cat > "$template_file" <<DOC
 trim: '%'
 ---
 % a = 1
@@ -115,7 +79,7 @@ trim: '%'
 <%= a %> + <%= b %> = <%= c %>
 DOC
 
-linecook "$ts_test_dir/example.lc" | assert_output "\
+linecook "$template_file" | assert_output "\
 1 + 2 = 3
 "
 }
@@ -128,7 +92,7 @@ linecook "$template_name" | assert_output "3"
 
 test_linecook_can_find_template_files_under_dir () {
 mkdir -p "$ts_test_dir/dir"
-printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/$template_name.erb"
+printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/$template_name.lc"
 export LINECOOK_PATH="$ts_test_dir"
 linecook "dir/$template_name" | assert_output "3"
 }
@@ -297,8 +261,8 @@ linecook -I "$ts_test_dir" "$template_name" | assert_output "3"
 
 test_linecook_l_prints_list_of_templates_on_LINECOOK_PATH () {
 mkdir -p "$ts_test_dir/x/y"
-touch "$ts_test_dir/abc.erb"
-touch "$ts_test_dir/x/y/z.erb"
+touch "$ts_test_dir/abc.lc"
+touch "$ts_test_dir/x/y/z.lc"
 export LINECOOK_PATH="$ts_test_dir"
 linecook -l | assert_output "\
 abc
@@ -308,10 +272,10 @@ x/y/z
 
 test_linecook_l_prints_list_of_matching_templates_on_LINECOOK_PATH () {
 mkdir -p "$ts_test_dir"
-touch "$ts_test_dir/abc.erb"
-touch "$ts_test_dir/abd.erb"
-touch "$ts_test_dir/a.erb"
-touch "$ts_test_dir/ax.erb"
+touch "$ts_test_dir/abc.lc"
+touch "$ts_test_dir/abd.lc"
+touch "$ts_test_dir/a.lc"
+touch "$ts_test_dir/ax.lc"
 
 export LINECOOK_PATH="$ts_test_dir"
 linecook -l ab | assert_output "\
@@ -355,14 +319,14 @@ existing
 }
 
 test_linecook_o_creates_file_with_according_to_filename_and_mode () {
-cat > "$ts_test_dir/template.lc" <<DOC
+cat > "$template_file" <<DOC
 filename: "<%= __template_name__.reverse %>.txt"
 mode: 0600
 ---
 DOC
 
-linecook -o "$ts_test_dir" "$ts_test_dir/template.lc" a b c
-ls -la "$ts_test_dir/etalpmet.txt" | awk '{ print $1 }' | assert_output "\
+linecook -o "$ts_test_dir" "$template_file" a b c
+ls -la "$ts_test_dir/elpmaxe.txt" | awk '{ print $1 }' | assert_output "\
 -rw-------
 " 
 }

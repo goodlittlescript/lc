@@ -11,25 +11,8 @@ module Linecook
       @attributes = attributes
     end
 
-    def properties_file
-      @properties_file ||= begin
-        extname = File.extname(template_file)
-        if extname == ".lc"
-          template_file
-        else
-          template_file.chomp(extname) + ".yml"
-        end
-      end
-    end
-
     def properties
-      @properties ||= begin
-        if File.exists?(properties_file)
-          YAML.load_file(properties_file) || {}
-        else
-          {}
-        end
-      end
+      @properties ||= YAML.load(sections.first)
     end
 
     def attrs
@@ -92,20 +75,9 @@ module Linecook
       context_class.new(attrs, fields, default_fields.values, template_file)
     end
 
-    def text
-      @text ||= begin
-        text = File.read(template_file)
-        extname = File.extname(template_file)
-        if extname == ".lc"
-          text = text.split("---\n", 2).last
-        end
-        text
-      end
-    end
-
     def erb
       @erb ||= begin
-        erb = ERB.new(text, nil, trim_mode)
+        erb = ERB.new(sections.last, nil, trim_mode)
         erb.filename = template_file
         erb
       end
@@ -113,6 +85,22 @@ module Linecook
 
     def result(fields)
       context(fields).__render__(erb)
+    end
+
+    private
+
+    def sections
+      @sections ||= begin
+        text = File.read(template_file)
+        yaml, erb = text.split("---\n", 2)
+        if erb.nil?
+          yaml, erb = '{}', yaml
+        end
+        if yaml.strip.empty?
+          yaml = '{}'
+        end
+        [yaml, erb]
+      end
     end
   end
 end

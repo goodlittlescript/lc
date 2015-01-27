@@ -65,16 +65,16 @@ class Linecook::ConfigTest < Test::Unit::TestCase
     test_dir_b = Dir.mktmpdir
 
     begin
-      FileUtils.touch "#{test_dir_a}/x.erb"
-      FileUtils.touch "#{test_dir_a}/y.erb"
-      FileUtils.touch "#{test_dir_b}/y.erb"
-      FileUtils.touch "#{test_dir_b}/z.erb"
+      FileUtils.touch "#{test_dir_a}/x.lc"
+      FileUtils.touch "#{test_dir_a}/y.lc"
+      FileUtils.touch "#{test_dir_b}/y.lc"
+      FileUtils.touch "#{test_dir_b}/z.lc"
 
       config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
       assert_equal({
-        "x" => "#{test_dir_a}/x.erb",
-        "y" => "#{test_dir_a}/y.erb",
-        "z" => "#{test_dir_b}/z.erb",
+        "x" => "#{test_dir_a}/x.lc",
+        "y" => "#{test_dir_a}/y.lc",
+        "z" => "#{test_dir_b}/z.lc",
       }, config.template_files)
     ensure
       FileUtils.remove_entry test_dir_a
@@ -91,16 +91,16 @@ class Linecook::ConfigTest < Test::Unit::TestCase
     test_dir_b = Dir.mktmpdir
 
     begin
-      FileUtils.touch "#{test_dir_a}/x.erb"
-      FileUtils.touch "#{test_dir_a}/y.erb"
-      FileUtils.touch "#{test_dir_b}/y.erb"
-      FileUtils.touch "#{test_dir_b}/z.erb"
+      FileUtils.touch "#{test_dir_a}/x.lc"
+      FileUtils.touch "#{test_dir_a}/y.lc"
+      FileUtils.touch "#{test_dir_b}/y.lc"
+      FileUtils.touch "#{test_dir_b}/z.lc"
 
       config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
       assert_equal ["x", "y", "z"], config.templates.keys.sort
-      assert_equal "#{test_dir_a}/x.erb", config.templates["x"].template_file
-      assert_equal "#{test_dir_a}/y.erb", config.templates["y"].template_file
-      assert_equal "#{test_dir_b}/z.erb", config.templates["z"].template_file
+      assert_equal "#{test_dir_a}/x.lc", config.templates["x"].template_file
+      assert_equal "#{test_dir_a}/y.lc", config.templates["y"].template_file
+      assert_equal "#{test_dir_b}/z.lc", config.templates["z"].template_file
     ensure
       FileUtils.remove_entry test_dir_a
       FileUtils.remove_entry test_dir_b
