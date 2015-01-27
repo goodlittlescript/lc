@@ -60,21 +60,23 @@ class Linecook::ConfigTest < Test::Unit::TestCase
   # template_files
   #
 
-  def test_template_files_returns_all_template_files_found_on_path
+  def test_template_files_returns_all_template_files_found_on_path_under_recipes
     test_dir_a = Dir.mktmpdir
     test_dir_b = Dir.mktmpdir
 
     begin
-      FileUtils.touch "#{test_dir_a}/x.lc"
-      FileUtils.touch "#{test_dir_a}/y.lc"
-      FileUtils.touch "#{test_dir_b}/y.lc"
-      FileUtils.touch "#{test_dir_b}/z.lc"
+      FileUtils.mkdir "#{test_dir_a}/recipes"
+      FileUtils.touch "#{test_dir_a}/recipes/x.lc"
+      FileUtils.touch "#{test_dir_a}/recipes/y.lc"
+      FileUtils.mkdir "#{test_dir_b}/recipes"
+      FileUtils.touch "#{test_dir_b}/recipes/y.lc"
+      FileUtils.touch "#{test_dir_b}/recipes/z.lc"
 
       config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
       assert_equal({
-        "x" => "#{test_dir_a}/x.lc",
-        "y" => "#{test_dir_a}/y.lc",
-        "z" => "#{test_dir_b}/z.lc",
+        "x" => "#{test_dir_a}/recipes/x.lc",
+        "y" => "#{test_dir_a}/recipes/y.lc",
+        "z" => "#{test_dir_b}/recipes/z.lc",
       }, config.template_files)
     ensure
       FileUtils.remove_entry test_dir_a
@@ -86,21 +88,23 @@ class Linecook::ConfigTest < Test::Unit::TestCase
   # templates
   #
 
-  def test_templates_returns_all_templates_found_on_path
+  def test_templates_returns_all_templates_found_on_path_under_recipes
     test_dir_a = Dir.mktmpdir
     test_dir_b = Dir.mktmpdir
 
     begin
-      FileUtils.touch "#{test_dir_a}/x.lc"
-      FileUtils.touch "#{test_dir_a}/y.lc"
-      FileUtils.touch "#{test_dir_b}/y.lc"
-      FileUtils.touch "#{test_dir_b}/z.lc"
+      FileUtils.mkdir "#{test_dir_a}/recipes"
+      FileUtils.touch "#{test_dir_a}/recipes/x.lc"
+      FileUtils.touch "#{test_dir_a}/recipes/y.lc"
+      FileUtils.mkdir "#{test_dir_b}/recipes"
+      FileUtils.touch "#{test_dir_b}/recipes/y.lc"
+      FileUtils.touch "#{test_dir_b}/recipes/z.lc"
 
       config = Config.new(:template_dirs => [test_dir_a, test_dir_b])
       assert_equal ["x", "y", "z"], config.templates.keys.sort
-      assert_equal "#{test_dir_a}/x.lc", config.templates["x"].template_file
-      assert_equal "#{test_dir_a}/y.lc", config.templates["y"].template_file
-      assert_equal "#{test_dir_b}/z.lc", config.templates["z"].template_file
+      assert_equal "#{test_dir_a}/recipes/x.lc", config.templates["x"].template_file
+      assert_equal "#{test_dir_a}/recipes/y.lc", config.templates["y"].template_file
+      assert_equal "#{test_dir_b}/recipes/z.lc", config.templates["z"].template_file
     ensure
       FileUtils.remove_entry test_dir_a
       FileUtils.remove_entry test_dir_b

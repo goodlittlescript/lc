@@ -2,10 +2,10 @@
 . test/integration/helper
 
 setup () {
-mkdir -p "$ts_test_dir"
+mkdir -p "$ts_test_dir/recipes"
 
 template_name="example"
-template_file="$ts_test_dir/$template_name.lc"
+template_file="$ts_test_dir/recipes/$template_name.lc"
 }
 
 setup_fixture () {
@@ -91,8 +91,8 @@ linecook "$template_name" | assert_output "3"
 }
 
 test_linecook_can_find_template_files_under_dir () {
-mkdir -p "$ts_test_dir/dir"
-printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/dir/$template_name.lc"
+mkdir -p "$ts_test_dir/recipes/dir"
+printf "%s" "<%= 1 + 2 %>" > "$ts_test_dir/recipes/dir/$template_name.lc"
 export LINECOOK_PATH="$ts_test_dir"
 linecook "dir/$template_name" | assert_output "3"
 }
@@ -260,9 +260,9 @@ linecook -I "$ts_test_dir" "$template_name" | assert_output "3"
 #
 
 test_linecook_l_prints_list_of_templates_on_LINECOOK_PATH () {
-mkdir -p "$ts_test_dir/x/y"
-touch "$ts_test_dir/abc.lc"
-touch "$ts_test_dir/x/y/z.lc"
+mkdir -p "$ts_test_dir/recipes/x/y"
+touch "$ts_test_dir/recipes/abc.lc"
+touch "$ts_test_dir/recipes/x/y/z.lc"
 export LINECOOK_PATH="$ts_test_dir"
 linecook -l | assert_output "\
 abc
@@ -271,11 +271,10 @@ x/y/z
 }
 
 test_linecook_l_prints_list_of_matching_templates_on_LINECOOK_PATH () {
-mkdir -p "$ts_test_dir"
-touch "$ts_test_dir/abc.lc"
-touch "$ts_test_dir/abd.lc"
-touch "$ts_test_dir/a.lc"
-touch "$ts_test_dir/ax.lc"
+touch "$ts_test_dir/recipes/abc.lc"
+touch "$ts_test_dir/recipes/abd.lc"
+touch "$ts_test_dir/recipes/a.lc"
+touch "$ts_test_dir/recipes/ax.lc"
 
 export LINECOOK_PATH="$ts_test_dir"
 linecook -l ab | assert_output "\

@@ -71,8 +71,8 @@ module Linecook
         templates = {}
         template_dirs.each do |dir|
           dir = File.expand_path(dir)
-          Dir.glob(File.join(dir, "**/*.lc")).each do |file|
-            name = file[dir.length + 1, file.length - dir.length - 1 - File.extname(file).length]
+          Dir.glob(File.join(dir, "recipes/**/*.lc")).each do |file|
+            name = file[(dir.length + 9)...-3]
             template = Template.new(file, attributes)
             templates[name] ||= template
           end
