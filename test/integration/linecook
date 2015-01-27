@@ -172,10 +172,10 @@ got a b c {}
 }
 
 #
-# -f
+# -c
 #
 
-test_linecook_f_renders_template_for_each_line_in_csv_inputs () {
+test_linecook_c_renders_template_for_each_line_in_csv_inputs () {
 setup_fixture
 
 csv_file_one="$ts_test_dir/one.csv"
@@ -185,7 +185,7 @@ csv_file_two="$ts_test_dir/two.csv"
 printf "%s,%s,%s\n" x y z > "$csv_file_two"
 
 printf "%s,%s,%s\n" p q r |
-linecook -f "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
+linecook -c "$template_file" "$csv_file_one" - "$csv_file_two" | assert_output "\
 got a b c {}
 got i j k {}
 got p q r {}
@@ -208,6 +208,23 @@ got x y z {}
 }
 
 #
+# -f
+#
+
+test_linecook_f_overwrites_existing_files () {
+setup_fixture
+cat > "$ts_test_dir/$template_name" <<DOC
+existing
+DOC
+
+linecook -o "$ts_test_dir" -f "$template_file" a b c
+assert_status 0 $? "check linecook overwrite"
+
+cat "$ts_test_dir/$template_name" | assert_output "\
+got a b c {}
+"
+}
+
 # -H
 #
 
@@ -305,6 +322,20 @@ setup_fixture
 linecook -o "$ts_test_dir" "$template_file" a b c
 cat "$ts_test_dir/$template_name" | assert_output "\
 got a b c {}
+"
+}
+
+test_linecook_o_does_not_overwrite_existing_files () {
+setup_fixture
+cat > "$ts_test_dir/$template_name" <<DOC
+existing
+DOC
+
+linecook -o "$ts_test_dir" "$template_file" a b c
+assert_status 1 $? "check linecook failed to overwrite"
+
+cat "$ts_test_dir/$template_name" | assert_output "\
+existing
 "
 }
 

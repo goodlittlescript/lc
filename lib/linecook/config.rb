@@ -1,6 +1,5 @@
 require 'linecook/template'
 require 'linecook/parser'
-require 'fileutils'
 
 module Linecook
   class Config
@@ -11,6 +10,7 @@ module Linecook
           :field_sep => ',',
           :attributes => {},
           :output_dir => nil,
+          :force => false,
         }.merge(overrides)
       end
 
@@ -24,6 +24,7 @@ module Linecook
         config[:headers] = options[:headers]
         config[:attributes] = options[:attributes]
         config[:output_dir] = options[:output_dir]
+        config[:force] = options[:force]
 
         new(config)
       end
@@ -38,6 +39,7 @@ module Linecook
     attr_reader :headers
     attr_reader :attributes
     attr_reader :output_dir
+    attr_reader :force
 
     def initialize(config = {})
       @template_dirs  = config.fetch(:template_dirs) { [] }
@@ -45,6 +47,7 @@ module Linecook
       @headers        = config.fetch(:headers, nil)
       @attributes     = config.fetch(:attributes) { {} }
       @output_dir     = config.fetch(:output_dir, nil)
+      @force          = config.fetch(:force, false)
     end
 
     def parser(source, field_names = nil)
@@ -85,6 +88,10 @@ module Linecook
 
         unless File.exists?(parent_dir)
           FileUtils.mkdir_p(parent_dir)
+        end
+
+        if File.exists?(output_file) && ! force
+          raise "already exists: #{output_file.inspect}"
         end
 
         File.open(output_file, "w", &block)

@@ -30,20 +30,24 @@ options:
       options[:attributes].merge!(attrs)
     end
 
+    opts.on("-c", "--csv-files", "treat fields as csv files") do
+      options[:input] = :csv_files
+    end
+
     opts.on("-e", "set template from string") do
       options[:template_type] = :string
     end
 
-    opts.on("-F", "--field-sep FS", "csv field sep (assumes -f)") do |input|
+    opts.on("-F", "--field-sep FS", "csv field sep (assumes -c)") do |input|
       options[:input] = :csv_files
       options[:field_sep] = input
     end
 
-    opts.on("-f", "--csv-files", "treat fields as csv files") do
-      options[:input] = :csv_files
+    opts.on("-f", "--force", "overwrite existing on -o") do
+      options[:force] = true
     end
 
-    opts.on("-H", "--headers", "map csv headers to fields (assumes -f)") do
+    opts.on("-H", "--headers", "map csv headers to fields (assumes -c)") do
       options[:input] = :csv_files
       options[:headers] = true
     end

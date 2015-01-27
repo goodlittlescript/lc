@@ -20,19 +20,22 @@ These options control how `linecook` operates.
 * `-a`, `--attributes-file FILE`:
   Set attributes from a YAML file.
 
+* `-c`, `--csv-files`:
+  Treat FIELDS as csv files.
+
 * `-e`:
   Treat TEMPLATE as the template string.
 
 * `-F`, `--field-sep FS`:
-  The csv field sep. (assumes -f)
+  The csv field sep. (assumes -c)
 
-* `-f`, `--csv-files`:
-  Treat FIELDS as csv files.
+* `-f`, `--force`:
+  Force overwrite existing on `-o`.
 
 * `-H`, ` --headers`:
    Indicates that csv files have header rows. If field names are set in the
    template then map fields where the head- ers and field names match.
-   (assumes -f)
+   (assumes -c)
 
 * `-h`, `--help`:
   Prints help.
@@ -43,6 +46,9 @@ These options control how `linecook` operates.
 * `-l`, ` --list`:
    List templates along LINECOOK_PATH that match the current TEMPLATE. If
    not TEMPLATE is provided then all templates are listed.
+
+* `-o`, `--output-dir DIR`:
+   Print template to file.
 
 ## USAGE
 
