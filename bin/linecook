@@ -83,7 +83,7 @@ options:
   when :list
     config.templates.each_pair do |name, template|
       if template_file.nil? || name.index(template_file) == 0
-        puts name unless template_file == name
+        puts name unless template_file == name || template.type == :dir
       end
     end
 
@@ -98,7 +98,8 @@ options:
       tempfile = Tempfile.new("linecook")
       tempfile.puts(template_file)
       tempfile.close
-      template_file = tempfile.path
+      FileUtils.mv(tempfile.path, tempfile.path + '.lc')
+      template_file = tempfile.path + '.lc'
     end
 
     template = \

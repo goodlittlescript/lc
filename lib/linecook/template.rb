@@ -4,10 +4,14 @@ autoload(:YAML, "yaml")
 
 module Linecook
   class Template
-    attr_reader :template_file
+    LC_EXTNAME = '.lc'
 
-    def initialize(template_file, attributes = {})
+    attr_reader :template_file
+    attr_reader :template_root
+
+    def initialize(template_file, attributes = {}, template_root = Dir.pwd)
       @template_file = template_file
+      @template_root = template_root
       @attributes = attributes
     end
 
@@ -30,6 +34,18 @@ module Linecook
 
     def filename
       context([]).__render__(filename_erb)
+    end
+
+    def name
+      template_file[(template_root.length + 1)..-1].chomp(LC_EXTNAME)
+    end
+
+    def type
+      case
+      when File.directory?(template_file) then :dir
+      when File.extname(template_file) == LC_EXTNAME then :template
+      else :file
+      end
     end
 
     def mode
@@ -72,7 +88,7 @@ module Linecook
     end
 
     def context(fields)
-      context_class.new(attrs, fields, default_fields.values, template_file)
+      context_class.new(attrs, fields, default_fields.values, template_file, template_root)
     end
 
     def erb
@@ -84,14 +100,29 @@ module Linecook
     end
 
     def result(fields)
-      context(fields).__render__(erb)
+      case type
+      when :template then context(fields).__render__(erb)
+      when :file then text
+      else
+        template_dir = self.template_file
+        template_files = Dir.glob(File.expand_path("**/*", template_dir))
+        template_files.select! {|template_file| File.file?(template_file) }
+        template_files.map do |template_file|
+          template = self.class.new(template_file, @attributes, template_dir)
+          result = template.result(fields)
+          "[#{template.filename}] #{template.mode ? template.mode.to_s(8) : '-'} #{result.length}\n#{result}"
+        end.join("")
+      end
     end
 
     private
 
+    def text
+      type == :dir ? "" : File.read(template_file)
+    end
+
     def sections
       @sections ||= begin
-        text = File.read(template_file)
         yaml, erb = text.split("---\n", 2)
         if erb.nil?
           yaml, erb = '{}', yaml

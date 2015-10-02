@@ -1,5 +1,6 @@
 require 'linecook/template'
 require 'linecook/parser'
+require 'tempfile'
 
 module Linecook
   class Config
@@ -70,11 +71,10 @@ module Linecook
       @templates ||= begin
         templates = {}
         template_dirs.each do |dir|
-          dir = File.expand_path(dir)
-          Dir.glob(File.join(dir, "recipes/**/*.lc")).each do |file|
-            name = file[(dir.length + 9)...-3]
-            template = Template.new(file, attributes)
-            templates[name] ||= template
+          template_root = File.expand_path('recipes', dir)
+          Dir.glob(File.join(template_root, "**/*")).each do |template_file|
+            template = Template.new(template_file, attributes, template_root)
+            templates[template.name] ||= template
           end
         end
         templates
@@ -82,8 +82,43 @@ module Linecook
     end
 
     def output(template, &block)
-      if output_dir
-        output_file = File.expand_path(template.filename, output_dir)
+      case
+      when output_dir && template.type == :dir
+        if File.exists?(output_dir) && ! force
+          raise "already exists: #{output_dir.inspect}"
+        end
+
+        file = Tempfile.new('linecook')
+        yield file
+        file.close
+
+        File.open(file.path) do |input|
+          while line = input.gets
+            if line =~ /^\[(.*)\] (\d+|-) (\d+)/
+              target_file = File.join(output_dir, $1)
+              target_mode = $2
+              target_length = $3.to_i
+
+              target_dir = File.dirname(target_file)
+              unless File.exists?(target_dir)
+                FileUtils.mkdir_p(target_dir)
+              end
+
+              File.open(target_file, 'w') do |output|
+                output << input.read(target_length)
+              end
+
+              unless target_mode == '-'
+                FileUtils.chmod(target_mode.to_i(8), target_file)
+              end
+            else
+              raise "invalid format: #{line.inspect}"
+            end
+          end
+        end
+
+      when output_dir
+        output_file = output_dir
         parent_dir  = File.dirname(output_file)
 
         unless File.exists?(parent_dir)
@@ -99,6 +134,7 @@ module Linecook
         if mode = template.mode
           FileUtils.chmod(mode, output_file)
         end
+
       else
         yield $stdout
       end

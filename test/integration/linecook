@@ -6,6 +6,7 @@ mkdir -p "$ts_test_dir/recipes"
 
 template_name="example"
 template_file="$ts_test_dir/recipes/$template_name.lc"
+template_dir="$ts_test_dir/recipes/$template_name"
 }
 
 setup_fixture () {
@@ -38,6 +39,30 @@ DOC
 
 linecook "$template_file" a b c | assert_output "\
 got a b c
+"
+}
+
+test_linecook_renders_dir_with_arguments_as_fields () {
+mkdir -p "$template_dir"
+
+cat > "$template_dir/a.lc" <<DOC
+A <%= fields.join(' ') %> {<%= attrs.to_a.map {|kv| kv.join('=') }.join(' ') %>}
+a <%= fields.join(' ') %> {<%= attrs.to_a.map {|kv| kv.join('=') }.join(' ') %>}
+DOC
+
+mkdir -p "$template_dir/b"
+cat > "$template_dir/b/c.lc" <<DOC
+C <%= fields.join(' ') %> {<%= attrs.to_a.map {|kv| kv.join('=') }.join(' ') %>}
+c <%= fields.join(' ') %> {<%= attrs.to_a.map {|kv| kv.join('=') }.join(' ') %>}
+DOC
+
+linecook "$template_dir" x y z | assert_output "\
+[a] - 22
+A x y z {}
+a x y z {}
+[b/c] - 22
+C x y z {}
+c x y z {}
 "
 }
 
@@ -192,14 +217,14 @@ got x y z {}
 
 test_linecook_f_overwrites_existing_files () {
 setup_fixture
-cat > "$ts_test_dir/$template_name" <<DOC
+cat > "$ts_test_dir/output" <<DOC
 existing
 DOC
 
-linecook -o "$ts_test_dir" -f "$template_file" a b c
+linecook -o "$ts_test_dir/output" -f "$template_file" a b c
 assert_status 0 $? "check linecook overwrite"
 
-cat "$ts_test_dir/$template_name" | assert_output "\
+cat "$ts_test_dir/output" | assert_output "\
 got a b c {}
 "
 }
@@ -295,39 +320,57 @@ linecook -h | grep -q "usage: linecook"
 # -o
 #
 
-test_linecook_o_creates_file_in_specified_dir () {
+test_linecook_o_creates_specified_output_file () {
 setup_fixture
-linecook -o "$ts_test_dir" "$template_file" a b c
-cat "$ts_test_dir/$template_name" | assert_output "\
+linecook -o "$ts_test_dir/output" "$template_file" a b c
+cat "$ts_test_dir/output" | assert_output "\
 got a b c {}
 "
 }
 
 test_linecook_o_does_not_overwrite_existing_files () {
 setup_fixture
-cat > "$ts_test_dir/$template_name" <<DOC
+cat > "$ts_test_dir/output" <<DOC
 existing
 DOC
 
-linecook -o "$ts_test_dir" "$template_file" a b c
+linecook -o "$ts_test_dir/output" "$template_file" a b c
 assert_status 1 $? "check linecook failed to overwrite"
 
-cat "$ts_test_dir/$template_name" | assert_output "\
+cat "$ts_test_dir/output" | assert_output "\
 existing
 "
 }
 
-test_linecook_o_creates_file_with_according_to_filename_and_mode () {
+test_linecook_o_creates_file_with_according_to_mode () {
 cat > "$template_file" <<DOC
-filename: "<%= __template_name__.reverse %>.txt"
 mode: 0600
 ---
 DOC
 
-linecook -o "$ts_test_dir" "$template_file" a b c
-ls -la "$ts_test_dir/elpmaxe.txt" | awk '{ print $1 }' | assert_output "\
+linecook -o "$ts_test_dir/output" "$template_file" a b c
+ls -la "$ts_test_dir/output" | awk '{ print $1 }' | assert_output "\
 -rw-------
 " 
+}
+
+test_linecook_o_creates_files_in_output_dir_when_rendering_dir () {
+mkdir -p "$template_dir/input"
+cat > "$template_dir/input/a.lc" <<DOC
+A <%= fields.join(' ') %>
+DOC
+
+mkdir -p "$template_dir/input/b"
+cat > "$template_dir/input/b/c.lc" <<DOC
+C <%= fields.join(' ') %>
+DOC
+
+linecook -o "$ts_test_dir/output" "$template_dir/input" x y z
+
+cat "$ts_test_dir/output/a" "$ts_test_dir/output/b/c" | assert_output "\
+A x y z
+C x y z
+"
 }
 
 . ts
