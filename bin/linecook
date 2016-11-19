@@ -70,6 +70,10 @@ options:
       options[:output_dir] = input
     end
 
+    opts.on("-X", "--example", "print example template") do
+      options[:mode] = :example
+    end
+
     opts.on("-x", "--explain", "print properties section") do
       options[:mode] = :explain
     end
@@ -89,6 +93,21 @@ options:
         puts name unless template_file == name
       end
     end
+    exit 0
+  end
+
+  if mode == :example
+    puts "\
+#!/usr/bin/env linecook
+attrs:
+  key: value
+fields:
+  a: x
+  b: y
+  c: z
+---
+got <%= a %> <%= b %> <%= c %> (<%= key %>)
+"
     exit 0
   end
 

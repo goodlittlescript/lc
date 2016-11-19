@@ -331,6 +331,16 @@ ls -la "$ts_test_dir/elpmaxe.txt" | awk '{ print $1 }' | assert_output "\
 }
 
 #
+# -X
+#
+
+test_linecook_X_prints_example_template () {
+linecook -e "$(linecook -X)" | assert_output "\
+got x y z (value)
+"
+}
+
+#
 # -x
 #
 
