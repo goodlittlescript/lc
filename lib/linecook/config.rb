@@ -1,5 +1,6 @@
 require 'linecook/template'
 require 'linecook/parser'
+require 'fileutils'
 
 module Linecook
   class Config

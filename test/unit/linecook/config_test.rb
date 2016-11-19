@@ -2,7 +2,7 @@
 require File.expand_path('../../helper', __FILE__)
 require 'linecook/config'
 
-class Linecook::ConfigTest < Test::Unit::TestCase
+class Linecook::ConfigTest < MiniTest::Test
   Config = Linecook::Config
   Template = Linecook::Template
 

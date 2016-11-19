@@ -2,7 +2,7 @@
 require File.expand_path('../../helper', __FILE__)
 require 'linecook/template'
 
-class Linecook::TemplateTest < Test::Unit::TestCase
+class Linecook::TemplateTest < MiniTest::Test
   Template = Linecook::Template
 
   attr_reader :test_dir
