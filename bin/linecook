@@ -99,6 +99,15 @@ options:
   if mode == :example
     puts "\
 #!/usr/bin/env linecook
+##############################################################################
+# Properties - YAML front matter
+# * attrs are shared per-render (ex: global attributes file)
+# * fields are specific to a render (ex: lines in a CSV file)
+#
+# Template
+# * methods are made to access attrs/fields by name
+# * methods return defaults unless overridden
+##############################################################################
 attrs:
   key: value
 fields:
@@ -106,7 +115,14 @@ fields:
   b: y
   c: z
 ---
-got <%= a %> <%= b %> <%= c %> (<%= key %>)
+attrs: <%= attrs.inspect %>
+fields: <%= fields.inspect %>
+key: <%= key %>
+a: <%= a %>
+b: <%= b %>
+c: <%= c %>
+file: <%= __template_file__ %>
+name: <%= __template_name__ %>
 "
     exit 0
   end
