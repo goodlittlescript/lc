@@ -2,7 +2,7 @@ _linecook() {
   local word words
 
   word=${COMP_WORDS[COMP_CWORD]}
-  words="$(${COMP_WORDS[@]} -l)"
+  words="$(${COMP_WORDS[@]} -l 2>/dev/null)"
 
   if [ -n "$words" ]
   then COMPREPLY=( $(compgen -W "$words" -- "$word") )
