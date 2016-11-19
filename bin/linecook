@@ -70,6 +70,10 @@ options:
       options[:output_dir] = input
     end
 
+    opts.on("-x", "--explain", "print properties section") do
+      options[:mode] = :explain
+    end
+
   end.parse!
 
   mode  = options[:mode]
@@ -79,58 +83,62 @@ options:
   config = Linecook.setup(options)
   template_file, *fields = ARGV; ARGV.clear
 
-  case mode
-  when :list
+  if mode == :list
     config.templates.each_pair do |name, template|
       if template_file.nil? || name.index(template_file) == 0
         puts name unless template_file == name
       end
     end
+    exit 0
+  end
 
+  if template_file.nil?
+    $stderr.puts "no template specified"
+    exit 1
+  end
+
+  if template_type == :string
+    require 'tempfile'
+    tempfile = Tempfile.new("linecook")
+    tempfile.puts(template_file)
+    tempfile.close
+    template_file = tempfile.path
+  end
+
+  template = \
+  if File.exists?(template_file)
+    Linecook::Template.new(template_file, config.attributes)
   else
-    if template_file.nil?
-      $stderr.puts "no template specified"
-      exit 1
-    end
+    config.templates[template_file]
+  end
 
-    if template_type == :string
-      require 'tempfile'
-      tempfile = Tempfile.new("linecook")
-      tempfile.puts(template_file)
-      tempfile.close
-      template_file = tempfile.path
-    end
+  if template.nil?
+    $stderr.puts "could not find template: #{template_file.inspect}"
+    exit 1
+  end
 
-    template = \
-    if File.exists?(template_file)
-      Linecook::Template.new(template_file, config.attributes)
-    else
-      config.templates[template_file]
-    end
+  if mode == :explain
+    puts template.properties.to_yaml
+    exit 0
+  end
 
-    if template.nil?
-      $stderr.puts "could not find template: #{template_file.inspect}"
-      exit 1
-    end
+  config.output(template) do |io|
+    case input
+    when :fields
+      io.print template.result(fields)
+    when :csv_files
+      csv_files = fields
 
-    config.output(template) do |io|
-      case input
-      when :fields
-        io.print template.result(fields)
-      when :csv_files
-        csv_files = fields
+      if csv_files.empty?
+        csv_files << "-" 
+      end
 
-        if csv_files.empty?
-          csv_files << "-" 
-        end
-
-        csv_files.each do |file|
-          file = 0 if file == "-"
-          File.open(file) do |source|
-            parser = config.parser(source, template.field_names)
-            while fields = parser.gets
-              io.print template.result(fields)
-            end
+      csv_files.each do |file|
+        file = 0 if file == "-"
+        File.open(file) do |source|
+          parser = config.parser(source, template.field_names)
+          while fields = parser.gets
+            io.print template.result(fields)
           end
         end
       end

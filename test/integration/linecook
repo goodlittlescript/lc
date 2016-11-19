@@ -330,4 +330,22 @@ ls -la "$ts_test_dir/elpmaxe.txt" | awk '{ print $1 }' | assert_output "\
 " 
 }
 
+#
+# -x
+#
+
+test_linecook_x_prints_properties () {
+setup_fixture_with_properties
+
+linecook -x "$template_file" | assert_output "\
+---
+attrs:
+  kk: v
+fields:
+  xx: X
+  yy: Y
+  zz: Z
+"
+}
+
 . ts
