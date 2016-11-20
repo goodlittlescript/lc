@@ -1,4 +1,4 @@
 module Linecook
-  VERSION="0.0.0"
-  RELDATE="2014-01-15"
+  VERSION="1.0.0"
+  RELDATE="2016-10-19"
 end
