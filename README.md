@@ -50,6 +50,12 @@ These options control how `linecook` operates.
 * `-o`, `--output-dir DIR`:
    Print template to file.
 
+* `-X`, `--example`:
+   Print an example template.
+
+* `-x`, `--explain`:
+   Print the properties section of a template.
+
 ## USAGE
 
 Templates are ruby ERB.  When rendered the template can access the fields of
