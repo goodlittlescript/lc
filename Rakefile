@@ -8,7 +8,10 @@ ronn_lib   = File.join(ronn_dir, 'lib')
 ronn_exe   = File.join(ronn_dir, 'bin/ronn')
 file ronn_exe do
   mkdir_p vendor_dir
-  sh "git clone git://github.com/thinkerbot/ronn.git '#{vendor_dir}'"
+  # get the dependencies
+  sh "gem install --no-rdoc --no-ri ronn"
+  # get the patched code
+  sh "git clone git://github.com/thinkerbot/ronn.git '#{ronn_dir}'"
 end
 
 # Manpages
