@@ -12,7 +12,7 @@ module Linecook
     end
 
     def properties
-      @properties ||= YAML.load(sections.first)
+      @properties ||= (sections.first == '{}' ? {} : YAML.load(sections.first))
     end
 
     def attrs
