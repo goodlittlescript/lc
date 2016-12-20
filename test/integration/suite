@@ -1,4 +1,0 @@
-#!/bin/bash
-find test/integration -type f |
-grep -v -E '(helper|suite)' |
-xargs ts "$@"

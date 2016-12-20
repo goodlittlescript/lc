@@ -1,18 +1,227 @@
 #!/usr/bin/env ruby
-$:.unshift File.expand_path('../../lib', File.realpath(__FILE__))
-
 begin
-  require 'linecook'
-  require 'optparse'
+  VERSION="1.0.2"
+  RELDATE="2016-12-13"
 
-  options = Linecook.options(
-    :mode  => :render,
-    :input => :fields,
-    :template_type => :file,
-  )
+  ###########################################################################
+  require 'optparse'
+  require 'erb'
+  autoload :CSV, 'csv'
+  autoload :YAML, 'yaml'
+  autoload :JSON, 'json'
+  autoload :Pathname, 'pathname'
+  autoload :FileUtils, 'fileutils'
+
+  class Context < BasicObject
+    attr_reader :obj
+
+    def initialize(obj, template_file)
+      @obj  = obj
+      @template_file = template_file
+    end
+
+    def __template_file__
+      @template_file
+    end
+
+    def __render__(erb)
+      erb.result(::Kernel.binding)
+    end
+
+    def method_missing(method_name, *args)
+      if obj.kind_of?(::Hash)
+        obj[method_name.to_s]
+      else
+        nil
+      end
+    end
+  end
+
+  class Template
+    attr_reader :template_file
+    attr_reader :template_dir
+
+    def initialize(template_file, template_dir = nil)
+      @template_file = template_file
+      @template_dir = template_dir || File.dirname(template_file)
+    end
+
+    def path
+      @path ||= Pathname.new File.expand_path(template_file)
+    end
+
+    def dir_path
+      @dir_path ||= Pathname.new(File.expand_path(template_dir))
+    end
+
+    def relative_path
+      @relative_path ||= path.relative_path_from(dir_path)
+    end
+
+    def text
+      @text ||= File.read(template_file)
+    end
+
+    def erb
+      @erb ||= begin
+        erb = ERB.new(text, nil, "<>")
+        erb.filename = template_file
+        erb
+      end
+    end
+
+    def context(obj)
+      Context.new(obj, template_file)
+    end
+
+    def result(obj)
+      context(obj).__render__(erb)
+    end
+  end
+
+  class Printer
+    attr_reader :options
+
+    def initialize(options = {})
+      @options = options
+    end
+
+    def setup
+      self
+    end
+
+    def teardown
+      self
+    end
+
+    def target_for(template)
+      raise NotImplementedError
+    end
+  end
+
+  class StdoutPrinter < Printer
+    def target_for(template)
+      $stdout
+    end
+  end
+
+  class DirectoryPrinter < Printer
+    def target_dir
+      options[:target_dir]
+    end
+
+    def force?
+      options[:force]
+    end
+
+    def setup
+      if File.exists?(target_dir) && !Dir.entries(target_dir).empty?
+        if force?
+          FileUtils.rm_r(target_dir)
+        else
+          $stderr.puts "target dir already exists and is not empty: #{target_dir.inspect}"
+          exit 1
+        end
+      end
+      @targets = {}
+      super
+    end
+
+    def teardown
+      @targets.each_value do |target|
+        target.close
+        puts target.path
+      end
+      @targets = nil
+      super
+    end
+
+    def target_for(template)
+      target_file = File.join(target_dir, template.relative_path.to_s)
+
+      @targets[target_file] ||= begin
+        dirname = File.dirname(target_file)
+        FileUtils.mkdir_p(dirname) unless File.exists?(dirname)
+        File.open(target_file, "w")
+      end
+    end
+  end
+
+  class Parser
+    attr_reader :io
+    attr_reader :options
+
+    def initialize(io, options = {})
+      @io = io
+      @options = options
+    end
+
+    def each
+      raise NotImplementedError
+    end
+  end
+
+  class CSVParser < Parser
+    def each
+      csv = CSV.new(io, options)
+      while row = csv.gets
+        yield row.kind_of?(Array) ? row : row.to_hash
+      end
+    end
+  end
+
+  class JSONParser < Parser
+    def each
+      while line = io.gets
+        yield JSON.parse(line)
+      end
+    end
+  end
+
+  class YAMLParser < Parser
+    def each
+      YAML.load_stream(io) do |obj|
+        yield obj
+      end
+    end
+  end
+  ###########################################################################
+
+  parser_classes = {
+    csv: CSVParser,
+    json: JSONParser,
+    yaml: YAMLParser,
+  }
+  printer_classes = {
+    stdout: StdoutPrinter,
+    directory: DirectoryPrinter,
+  }
+  options = {
+    template_type: :file,
+    parser_type: :csv,
+    parser_opts: {
+      csv: {
+        col_sep: ' ',
+        row_sep: "\n",
+        headers: false,
+        converters: :numeric,
+      },
+      json: {},
+      yaml: {}
+    },
+    printer_type: :stdout,
+    printer_opts: {
+      stdout: {},
+      directory: {
+        source_dir: nil,
+        target_dir: nil,
+        force: false
+      }
+    },
+  }
   OptionParser.new do |opts|
     opts.banner = %{
-usage: linecook [options] TEMPLATE FIELDS...
+usage: linecook [options] TEMPLATES...
 
   Render ERB templates.
 
@@ -20,36 +229,29 @@ options:
 
 }.lstrip
 
-    opts.on("-A", "--attribute KEY=VALUE", "set an attribute") do |input|
-      key, value = input.split("=")
-      options[:attributes][key] = value
+    opts.on("-c", "--csv", "parse input as csv (default)") do
+      options[:parser_type] = :csv
+      options[:parser_opts][:csv][:headers] = false
     end
 
-    opts.on("-a", "--attributes-file FILE", "set attributes from file") do |input|
-      attrs = YAML.load_file(input)
-      options[:attributes].merge!(attrs)
+    opts.on("-d", "--dir-glob", "render all files in specified directories") do
+      options[:template_type] = :directory
     end
 
-    opts.on("-c", "--csv-files", "treat fields as csv files") do
-      options[:input] = :csv_files
-    end
-
-    opts.on("-e", "set template from string") do
+    opts.on("-e", "specify templates as strings") do
       options[:template_type] = :string
     end
 
-    opts.on("-F", "--field-sep FS", "csv field sep (assumes -c)") do |input|
-      options[:input] = :csv_files
-      options[:field_sep] = input
+    opts.on("-f", "--[no-]force", "overwrite existing files when using -o") do |input|
+      options[:printer_opts][:directory][:force] = input
     end
 
-    opts.on("-f", "--force", "overwrite existing on -o") do
-      options[:force] = true
+    opts.on("-F", "--field-sep FIELD_SEP", "field sep for csv input (#{options[:parser_opts][:csv][:col_sep].inspect})") do |input|
+      options[:parser_opts][:csv][:col_sep] = input
     end
 
-    opts.on("-H", "--headers", "map csv headers to fields (assumes -c)") do
-      options[:input] = :csv_files
-      options[:headers] = true
+    opts.on("-H", "--[no-]headers", "convert fields to obj using headers") do |input|
+      options[:parser_opts][:csv][:headers] = input
     end
 
     opts.on("-h", "--help", "print this help") do
@@ -58,127 +260,85 @@ options:
       exit
     end
 
-    opts.on("-I", "--path LINECOOK_PATH", "set template search path") do |input|
-      options[:path] = input
+    opts.on("-j", "--json", "parse input as json lines") do
+      options[:parser_type] = :json
     end
 
-    opts.on("-l", "--list", "list templates") do
-      options[:mode] = :list
+    opts.on("-o", "--output-dir [SOURCE_DIR:]TARGET_DIR", "output to target dir") do |input|
+      source_dir, target_dir = input.split(':')
+      source_dir, target_dir = nil, source_dir if target_dir.nil?
+
+      options[:printer_type] = :directory
+      options[:printer_opts][:directory][:source_dir] = source_dir
+      options[:printer_opts][:directory][:target_dir] = target_dir
     end
 
-    opts.on("-o", "--output-dir DIR", "output result to dir") do |input|
-      options[:output_dir] = input
+    opts.on("-R", "--row-sep ROW_SEP", "row sep for csv input (#{options[:parser_opts][:csv][:row_sep].inspect})") do |input|
+      options[:parser_opts][:csv][:row_sep] = input
     end
 
-    opts.on("-X", "--example", "print example template") do
-      options[:mode] = :example
+    opts.on("-y", "--yaml", "parse input as yaml documents") do
+      options[:parser_type] = :yaml
     end
-
-    opts.on("-x", "--explain", "print properties section") do
-      options[:mode] = :explain
-    end
-
   end.parse!
 
-  mode  = options[:mode]
-  input = options[:input]
   template_type = options[:template_type]
+  parser_type = options[:parser_type]
+  parser_opts = options[:parser_opts][parser_type]
+  printer_type = options[:printer_type]
+  printer_opts = options[:printer_opts][printer_type]
+  source_dir = printer_opts[:source_dir]
 
-  config = Linecook.setup(options)
-  template_file, *fields = ARGV; ARGV.clear
+  template_files = ARGV.dup; ARGV.clear
 
-  if mode == :list
-    config.templates.each_pair do |name, template|
-      if template_file.nil? || name.index(template_file) == 0
-        puts name unless template_file == name
-      end
-    end
-    exit 0
-  end
-
-  if mode == :example
-    puts "\
-#!/usr/bin/env linecook
-##############################################################################
-# Properties - YAML front matter
-# * attrs are shared per-render (ex: global attributes file)
-# * fields are specific to a render (ex: lines in a CSV file)
-#
-# Template
-# * methods are made to access attrs/fields by name
-# * methods return defaults unless overridden
-##############################################################################
-attrs:
-  key: value
-fields:
-  a: x
-  b: y
-  c: z
----
-attrs: <%= attrs.inspect %>
-fields: <%= fields.inspect %>
-key: <%= key %>
-a: <%= a %>
-b: <%= b %>
-c: <%= c %>
-file: <%= __template_file__ %>
-name: <%= __template_name__ %>
-"
-    exit 0
-  end
-
-  if template_file.nil?
-    $stderr.puts "no template specified"
+  if template_files.empty?
+    $stderr.puts 'no template specified'
     exit 1
   end
 
-  if template_type == :string
-    require 'tempfile'
-    tempfile = Tempfile.new("linecook")
-    tempfile.puts(template_file)
-    tempfile.close
-    template_file = tempfile.path
-  end
-
-  template = \
-  if File.exists?(template_file)
-    Linecook::Template.new(template_file, config.attributes)
-  else
-    config.templates[template_file]
-  end
-
-  if template.nil?
-    $stderr.puts "could not find template: #{template_file.inspect}"
-    exit 1
-  end
-
-  if mode == :explain
-    puts YAML.dump(template.properties)
-    exit 0
-  end
-
-  config.output(template) do |io|
-    case input
-    when :fields
-      io.print template.result(fields)
-    when :csv_files
-      csv_files = fields
-
-      if csv_files.empty?
-        csv_files << "-" 
+  templates = []
+  template_files.each do |template_file|
+    case template_type
+    when :string
+      require 'tempfile'
+      tempfile = Tempfile.new('linecook')
+      tempfile.puts(template_file)
+      tempfile.close
+      templates << Template.new(tempfile.path)
+    when :file
+      unless File.file?(template_file)
+        $stderr.puts "not a file: #{template_file.inspect}"
+        exit 1
       end
-
-      csv_files.each do |file|
-        file = 0 if file == "-"
-        File.open(file) do |source|
-          parser = config.parser(source, template.field_names)
-          while fields = parser.gets
-            io.print template.result(fields)
-          end
-        end
+      templates << Template.new(template_file, source_dir)
+    when :directory
+      unless File.directory?(template_file)
+        $stderr.puts "not a directory: #{template_file.inspect}"
+        exit 1
+      end
+      template_dir = template_file
+      pattern = File.join(template_dir, '**/*')
+      Dir.glob(pattern) do |template_file|
+        next if File.directory?(template_file)
+        templates << Template.new(template_file, source_dir || template_dir)
       end
     end
   end
+
+  parser_class = parser_classes[parser_type]
+  parser = parser_class.new($stdin, parser_opts)
+
+  printer_class = printer_classes[printer_type]
+  printer = printer_class.new(printer_opts)
+  
+  printer.setup
+  parser.each do |obj|
+    templates.each do |template|
+      target = printer.target_for(template) 
+      target.print template.result(obj)
+    end
+  end
+  printer.teardown
 
 rescue Interrupt
   exit 130

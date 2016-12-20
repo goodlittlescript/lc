@@ -1,3 +1,2 @@
 #!/bin/bash
-./test/unit/suite &&
-./test/integration/suite
+ts test/linecook

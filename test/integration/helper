@@ -1,5 +1,0 @@
-# set PATH
-export PATH="$PWD/bin:$PATH"
-
-# clear LINECOOK variables
-export LINECOOK_PATH=""

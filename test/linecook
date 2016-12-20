@@ -1,0 +1,198 @@
+#!/bin/bash
+. test/helper
+
+setup () {
+input_file="$ts_test_dir/input"
+output_dir="$ts_test_dir/output"
+templates_dir="$ts_test_dir/templates"
+template_file="$templates_dir/template"
+}
+
+setup_fixture () {
+mkdir -p "$templates_dir"
+cat > "$template_file" <<DOC
+got <%= xx || '.' %> (<%= obj.inspect %>)
+DOC
+}
+
+setup_dir_fixture () {
+mkdir -p "$templates_dir"
+cat > "${template_file}_x" <<DOC
+template_x <%= xx || '.' %> (<%= obj.inspect %>)
+DOC
+cat > "${template_file}_y" <<DOC
+template_y <%= yy || '.' %> (<%= obj.inspect %>)
+DOC
+}
+
+#
+# linecook tests
+#
+
+test_linecook_renders_template_with_parsed_objects_from_stdin () {
+setup_fixture
+
+printf "%s %s %s\n" a b c 1 2 3 |
+linecook "$template_file" | assert_output "\
+got . ([\"a\", \"b\", \"c\"])
+got . ([1, 2, 3])
+"
+}
+
+test_linecook_prints_error_if_no_template_is_specified () {
+linecook 2>&1 | assert_output "\
+no template specified
+"
+}
+
+test_linecook_prints_error_if_template_does_not_exist () {
+linecook "$template_file" 2>&1 | assert_output "\
+not a file: \"$template_file\"
+"
+}
+
+test_linecook_prints_error_if_dir_is_specified () {
+linecook "$ts_test_dir" 2>&1 | assert_output "\
+not a file: \"$ts_test_dir\"
+"
+}
+
+#
+# -d
+#
+
+test_linecook_d_renders_each_template_under_dir () {
+setup_dir_fixture
+
+printf "%s %s %s\n" xx yy zz a b c 1 2 3 |
+linecook -H -d "$templates_dir" | assert_output "\
+template_x a ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+template_y b ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+template_x 1 ({\"xx\"=>1, \"yy\"=>2, \"zz\"=>3})
+template_y 2 ({\"xx\"=>1, \"yy\"=>2, \"zz\"=>3})
+"
+}
+
+#
+# -e
+#
+
+test_linecook_e_makes_template_from_string () {
+printf "%s %s %s\n" a b c 1 2 3 |
+linecook -e "got <%= obj.inspect %>" | assert_output "\
+got [\"a\", \"b\", \"c\"]
+got [1, 2, 3]
+"
+}
+
+#
+# -F
+#
+
+test_linecook_F_sets_csv_col_sep () {
+setup_fixture
+
+printf "%s|%s|%s\n" a b c 1 2 3 |
+linecook -F '|' "$template_file" | assert_output "\
+got . ([\"a\", \"b\", \"c\"])
+got . ([1, 2, 3])
+"
+}
+
+#
+# -H
+#
+
+test_linecook_H_sets_csv_headers_and_fields_therefrom () {
+setup_fixture
+
+printf "%s %s %s\n" xx yy zz a b c 1 2 3 |
+linecook -H "$template_file" | assert_output "\
+got a ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+got 1 ({\"xx\"=>1, \"yy\"=>2, \"zz\"=>3})
+"
+}
+
+#
+# -h
+#
+
+test_linecook_h_prints_help () {
+linecook -h | grep -q "usage: linecook"
+}
+
+#
+# -j
+#
+
+test_linecook_j_parses_stdin_lines_as_json () {
+setup_fixture
+
+cat > "$input_file" <<DOC
+{"xx": "a", "yy": "b", "zz": "c"}
+[1, 2, 3]
+DOC
+
+linecook -j "$template_file" < "$input_file" | assert_output "\
+got a ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+got . ([1, 2, 3])
+"
+}
+
+#
+# -o
+#
+
+test_linecook_o_renders_each_template_into_file  () {
+setup_fixture
+
+output_file="$(
+  printf "%s %s %s\n" a b c 1 2 3 |
+  linecook -o "$output_dir" "$template_file"
+)"
+
+cat "$output_file" | assert_output "\
+got . ([\"a\", \"b\", \"c\"])
+got . ([1, 2, 3])
+"
+}
+
+test_linecook_o_with_d_renders_a_set_of_templates () {
+setup_dir_fixture
+
+printf "%s %s %s\n" xx yy zz a b c 1 2 3 |
+linecook -H -o "$output_dir" -d "$templates_dir"
+
+cat "$output_dir/template_x" "$output_dir/template_y" | assert_output "\
+template_x a ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+template_x 1 ({\"xx\"=>1, \"yy\"=>2, \"zz\"=>3})
+template_y b ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+template_y 2 ({\"xx\"=>1, \"yy\"=>2, \"zz\"=>3})
+"
+}
+
+#
+# -y
+#
+
+test_linecook_y_renders_stream_of_yaml_objects () {
+setup_fixture
+
+cat > "$input_file" <<DOC
+---
+xx: a
+yy: b
+zz: c
+---
+- 1
+- 2
+- 3
+DOC
+
+linecook -y "$template_file" < "$input_file" | assert_output "\
+got a ({\"xx\"=>\"a\", \"yy\"=>\"b\", \"zz\"=>\"c\"})
+got . ([1, 2, 3])
+"
+}
+
+. ts

@@ -1,0 +1,2 @@
+# set PATH
+export PATH="$PWD/bin:$PATH"
