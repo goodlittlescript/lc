@@ -1,0 +1,24 @@
+#!/bin/bash
+#############################################################################
+# JSON example
+#
+# Demonstrates input of hash as well as array objects using JSON.  JSON objects
+# are specified one-per-line.  Fields for hash objects are made available as
+# methods (as possible).  The same methods for array objects return nil.
+#
+#   ./examples/json/demo
+#
+#############################################################################
+. test/helper
+
+setup () {
+cd examples/json
+}
+
+test_example () {
+linecook -j template.erb < input.json | assert_output "\
+$(cat output.txt)
+"
+}
+
+. ts

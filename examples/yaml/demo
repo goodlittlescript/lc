@@ -1,0 +1,25 @@
+#!/bin/bash
+#############################################################################
+# YAML example
+#
+# Demonstrates input of hash as well as array objects using YAML.  YAML
+# documents are delimited as normal using '---'.  Fields for hash objects are
+# made available as methods (as possible).  The same methods for array objects
+# return nil.
+#
+#   ./examples/yaml/demo
+#
+#############################################################################
+. test/helper
+
+setup () {
+cd examples/yaml
+}
+
+test_example () {
+linecook -y template.erb < input.yaml | assert_output "\
+$(cat output.txt)
+"
+}
+
+. ts

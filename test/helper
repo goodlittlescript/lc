@@ -1,2 +1,3 @@
 # set PATH
 export PATH="$PWD/bin:$PATH"
+export TS_TMP_DIR="$PWD/tmp"

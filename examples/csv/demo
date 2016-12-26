@@ -1,0 +1,31 @@
+#!/bin/bash
+#############################################################################
+# CSV example
+#
+# Demonstrates input of array objects from CSV, and hash objects from CSV with
+# headers.  Numeric fields are parsed to numbers.  Fields for hash objects are
+# made available as methods (as possible).  The same methods for array objects
+# return nil.
+#
+#   ./examples/csv/demo
+#
+#############################################################################
+. test/helper
+
+setup () {
+cd examples/csv
+}
+
+test_example () {
+linecook template.erb < input.csv | assert_output "\
+$(cat output.txt)
+"
+}
+
+test_example_with_headers () {
+linecook -H template.erb < input_with_headers.csv | assert_output "\
+$(cat output_with_headers.txt)
+"
+}
+
+. ts
