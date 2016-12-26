@@ -29,11 +29,13 @@ begin
     end
 
     def method_missing(method_name, *args)
-      if obj.kind_of?(::Hash)
-        obj[method_name.to_s]
-      else
-        nil
-      end
+      nil
+    end
+  end
+
+  class HashContext < Context
+    def method_missing(method_name, *args)
+      obj[method_name.to_s]
     end
   end
 
@@ -71,7 +73,8 @@ begin
     end
 
     def context(obj)
-      Context.new(obj, template_file)
+      context_class = obj.kind_of?(Hash) ? HashContext : Context
+      context_class.new(obj, template_file)
     end
 
     def result(obj)
