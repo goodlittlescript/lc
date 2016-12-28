@@ -140,6 +140,24 @@ got . ([1, 2, 3])
 }
 
 #
+# -n
+#
+
+test_linecook_n_renders_templates_with_empty_attrs_n_times () {
+setup_fixture
+
+cat > "$input_file" <<DOC
+ignored
+ignored
+DOC
+
+linecook -n 2 "$template_file" < "$input_file" | assert_output "\
+got . ({})
+got . ({})
+"
+}
+
+#
 # -o
 #
 
