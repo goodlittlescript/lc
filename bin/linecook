@@ -330,6 +330,7 @@ options:
   end
   requires.each {|file| require file }
 
+  tempfiles = []
   templates = []
   template_files.each do |template_file|
     case template_type
@@ -338,6 +339,7 @@ options:
       tempfile = Tempfile.new('linecook')
       tempfile.puts(template_file)
       tempfile.close
+      tempfiles << tempfile
       templates << Template.new(tempfile.path)
     when :file
       unless File.file?(template_file)
