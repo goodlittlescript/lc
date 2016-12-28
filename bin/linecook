@@ -246,7 +246,7 @@ options:
       options[:parser_opts][:csv][:headers] = false
     end
 
-    opts.on("-d", "--dir-glob", "render all files in specified directories") do
+    opts.on("-d", "--directories", "render all files in specified directories") do
       options[:template_type] = :directory
     end
 
