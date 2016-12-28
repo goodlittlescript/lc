@@ -12,189 +12,189 @@ begin
   autoload :Pathname, 'pathname'
   autoload :FileUtils, 'fileutils'
 
-  class Context < BasicObject
-    attr_reader :obj
+  module Linecook
+    class Context < BasicObject
+      attr_reader :obj
 
-    def initialize(obj, template_file)
-      @obj  = obj
-      @template_file = template_file
-    end
+      def initialize(obj, template_file)
+        @obj  = obj
+        @template_file = template_file
+      end
 
-    def __template_file__
-      @template_file
-    end
+      def __template_file__
+        @template_file
+      end
 
-    def __render__(erb)
-      erb.result(::Kernel.binding)
-    end
+      def __render__(erb)
+        erb.result(::Kernel.binding)
+      end
 
-    def method_missing(method_name, *args)
-      nil
-    end
-  end
+      def __fetch__(method_name)
+        obj.kind_of?(::Hash) ? obj[method_name.to_s] : nil
+      end
 
-  class HashContext < Context
-    def method_missing(method_name, *args)
-      obj[method_name.to_s]
-    end
-  end
-
-  class Template
-    attr_reader :template_file
-    attr_reader :template_dir
-
-    def initialize(template_file, template_dir = nil)
-      @template_file = template_file
-      @template_dir = template_dir || File.dirname(template_file)
-    end
-
-    def path
-      @path ||= Pathname.new File.expand_path(template_file)
-    end
-
-    def dir_path
-      @dir_path ||= Pathname.new(File.expand_path(template_dir))
-    end
-
-    def relative_path
-      @relative_path ||= path.relative_path_from(dir_path)
-    end
-
-    def text
-      @text ||= File.read(template_file)
-    end
-
-    def erb
-      @erb ||= begin
-        erb = ERB.new(text, nil, "<>")
-        erb.filename = template_file
-        erb
+      def method_missing(method_name, *args)
+        args.empty? ? __fetch__(method_name) : super
       end
     end
 
-    def context(obj)
-      context_class = obj.kind_of?(Hash) ? HashContext : Context
-      context_class.new(obj, template_file)
-    end
+    class Template
+      attr_reader :template_file
+      attr_reader :template_dir
 
-    def result(obj)
-      context(obj).__render__(erb)
-    end
-  end
+      def initialize(template_file, template_dir = nil)
+        @template_file = template_file
+        @template_dir = template_dir || File.dirname(template_file)
+      end
 
-  class Printer
-    attr_reader :options
+      def path
+        @path ||= Pathname.new File.expand_path(template_file)
+      end
 
-    def initialize(options = {})
-      @options = options
-    end
+      def dir_path
+        @dir_path ||= Pathname.new(File.expand_path(template_dir))
+      end
 
-    def setup
-      self
-    end
+      def relative_path
+        @relative_path ||= path.relative_path_from(dir_path)
+      end
 
-    def teardown
-      self
-    end
+      def text
+        @text ||= File.read(template_file)
+      end
 
-    def target_for(template)
-      raise NotImplementedError
-    end
-  end
-
-  class StdoutPrinter < Printer
-    def target_for(template)
-      $stdout
-    end
-  end
-
-  class DirectoryPrinter < Printer
-    def target_dir
-      options[:target_dir]
-    end
-
-    def force?
-      options[:force]
-    end
-
-    def setup
-      if File.exists?(target_dir) && !Dir.entries(target_dir).empty?
-        if force?
-          FileUtils.rm_r(target_dir)
-        else
-          $stderr.puts "target dir already exists and is not empty: #{target_dir.inspect}"
-          exit 1
+      def erb
+        @erb ||= begin
+          erb = ERB.new(text, nil, "<>")
+          erb.filename = template_file
+          erb
         end
       end
-      @targets = {}
-      super
-    end
 
-    def teardown
-      @targets.each_value do |target|
-        target.close
-        puts target.path
+      def context(obj)
+        Context.new(obj, template_file)
       end
-      @targets = nil
-      super
-    end
 
-    def target_for(template)
-      target_file = File.join(target_dir, template.relative_path.to_s)
-
-      @targets[target_file] ||= begin
-        dirname = File.dirname(target_file)
-        FileUtils.mkdir_p(dirname) unless File.exists?(dirname)
-        File.open(target_file, "w")
+      def result(obj)
+        context(obj).__render__(erb)
       end
     end
-  end
 
-  class Parser
-    attr_reader :io
-    attr_reader :options
+    class Printer
+      attr_reader :options
 
-    def initialize(io, options = {})
-      @io = io
-      @options = options
+      def initialize(options = {})
+        @options = options
+      end
+
+      def setup
+        self
+      end
+
+      def teardown
+        self
+      end
+
+      def target_for(template)
+        raise NotImplementedError
+      end
     end
 
-    def each
-      raise NotImplementedError
+    class StdoutPrinter < Printer
+      def target_for(template)
+        $stdout
+      end
     end
-  end
 
-  class CSVParser < Parser
-    def each
-      csv = CSV.new(io, options)
-      while row = csv.gets
-        yield row.kind_of?(Array) ? row : row.to_hash
+    class DirectoryPrinter < Printer
+      def target_dir
+        options[:target_dir]
+      end
+
+      def force?
+        options[:force]
+      end
+
+      def setup
+        if File.exists?(target_dir) && !Dir.entries(target_dir).empty?
+          if force?
+            FileUtils.rm_r(target_dir)
+          else
+            $stderr.puts "target dir already exists and is not empty: #{target_dir.inspect}"
+            exit 1
+          end
+        end
+        @targets = {}
+        super
+      end
+
+      def teardown
+        @targets.each_value do |target|
+          target.close
+          puts target.path
+        end
+        @targets = nil
+        super
+      end
+
+      def target_for(template)
+        target_file = File.join(target_dir, template.relative_path.to_s)
+
+        @targets[target_file] ||= begin
+          dirname = File.dirname(target_file)
+          FileUtils.mkdir_p(dirname) unless File.exists?(dirname)
+          File.open(target_file, "w")
+        end
+      end
+    end
+
+    class Parser
+      attr_reader :io
+      attr_reader :options
+
+      def initialize(io, options = {})
+        @io = io
+        @options = options
+      end
+
+      def each
+        raise NotImplementedError
+      end
+    end
+
+    class CSVParser < Parser
+      def each
+        csv = CSV.new(io, options)
+        while row = csv.gets
+          yield row.kind_of?(Array) ? row : row.to_hash
+        end
+      end
+    end
+
+    class JSONParser < Parser
+      def each
+        while line = io.gets
+          yield JSON.parse(line)
+        end
+      end
+    end
+
+    class YAMLParser < Parser
+      def each
+        YAML.load_stream(io) do |obj|
+          yield obj
+        end
+      end
+    end
+
+    class Generator < Parser
+      def each
+        n = options[:n]
+        n.times { yield({}) }
       end
     end
   end
-
-  class JSONParser < Parser
-    def each
-      while line = io.gets
-        yield JSON.parse(line)
-      end
-    end
-  end
-
-  class YAMLParser < Parser
-    def each
-      YAML.load_stream(io) do |obj|
-        yield obj
-      end
-    end
-  end
-
-  class Generator < Parser
-    def each
-      n = options[:n]
-      n.times { yield({}) }
-    end
-  end
+  include Linecook
   ###########################################################################
 
   parser_classes = {
@@ -230,6 +230,7 @@ begin
         force: false
       }
     },
+    requires: [],
   }
   OptionParser.new do |opts|
     opts.banner = %{
@@ -272,6 +273,10 @@ options:
       exit
     end
 
+    opts.on("-I DIRECTORY", "specify \$LOAD_PATH directory") do |input|
+      $LOAD_PATH.unshift input
+    end
+
     opts.on("-j", "--json", "parse input as json lines") do
       options[:parser_type] = :json
     end
@@ -290,6 +295,10 @@ options:
       options[:printer_opts][:directory][:target_dir] = target_dir
     end
 
+    opts.on("-r", "--require FILE", "require file (use with -I, or give a full path)") do |input|
+      options[:requires] << input
+    end
+
     opts.on("-R", "--row-sep ROW_SEP", "row sep for csv input (#{options[:parser_opts][:csv][:row_sep].inspect})") do |input|
       options[:parser_opts][:csv][:row_sep] = input
     end
@@ -305,6 +314,7 @@ options:
   printer_type = options[:printer_type]
   printer_opts = options[:printer_opts][printer_type]
   source_dir = printer_opts[:source_dir]
+  requires = options[:requires]
 
   template_files = ARGV.dup; ARGV.clear
 
@@ -312,6 +322,7 @@ options:
     $stderr.puts 'no template specified'
     exit 1
   end
+  requires.each {|file| require file }
 
   templates = []
   template_files.each do |template_file|
