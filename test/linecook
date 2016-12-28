@@ -148,6 +148,20 @@ got X ([1, 2, 3])
 }
 
 #
+# -i
+#
+
+test_linecook_i_sets_input_source () {
+setup_fixture
+
+printf "%s %s %s\n" a b c 1 2 3 > "$input_file"
+linecook -i "$input_file" "$template_file" | assert_output "\
+got . ([\"a\", \"b\", \"c\"])
+got . ([1, 2, 3])
+"
+}
+
+#
 # -j
 #
 

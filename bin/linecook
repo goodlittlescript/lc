@@ -208,6 +208,7 @@ begin
     directory: DirectoryPrinter,
   }
   options = {
+    input_file: 0,
     template_type: :file,
     parser_type: :csv,
     parser_opts: {
@@ -277,6 +278,10 @@ options:
       $LOAD_PATH.unshift input
     end
 
+    opts.on("-i", "--input-file INPUT_FILE", "input file (stdin)") do |input|
+      options[:input_file] = input == '-' ? 0 : input
+    end
+
     opts.on("-j", "--json", "parse input as json lines") do
       options[:parser_type] = :json
     end
@@ -308,6 +313,7 @@ options:
     end
   end.parse!
 
+  input_file = options[:input_file]
   template_type = options[:template_type]
   parser_type = options[:parser_type]
   parser_opts = options[:parser_opts][parser_type]
@@ -353,8 +359,9 @@ options:
     end
   end
 
+  input_io = File.open(input_file)
   parser_class = parser_classes[parser_type]
-  parser = parser_class.new($stdin, parser_opts)
+  parser = parser_class.new(input_io, parser_opts)
 
   printer_class = printer_classes[printer_type]
   printer = printer_class.new(printer_opts)
@@ -367,6 +374,7 @@ options:
     end
   end
   printer.teardown
+  input_io.close
 
 rescue Interrupt
   exit 130
