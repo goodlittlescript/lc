@@ -30,7 +30,7 @@ begin
       end
 
       def __fetch__(method_name)
-        obj.kind_of?(::Hash) ? obj[method_name.to_s] : nil
+        obj.kind_of?(::Hash) ? obj.fetch(method_name.to_s) : nil
       end
 
       def method_missing(method_name, *args)
@@ -208,7 +208,7 @@ begin
     directory: DirectoryPrinter,
   }
   options = {
-    input_file: 0,
+    input_file: nil,
     template_type: :file,
     parser_type: :csv,
     parser_opts: {
@@ -274,11 +274,11 @@ options:
       exit
     end
 
-    opts.on("-I DIRECTORY", "specify \$LOAD_PATH directory") do |input|
+    opts.on("-I", "--load-path DIRECTORY", "specify \$LOAD_PATH directory") do |input|
       $LOAD_PATH.unshift input
     end
 
-    opts.on("-i", "--input-file INPUT_FILE", "input file (stdin)") do |input|
+    opts.on("-i", "--input INPUT_FILE", "input file (stdin)") do |input|
       options[:input_file] = input == '-' ? 0 : input
     end
 
@@ -286,12 +286,13 @@ options:
       options[:parser_type] = :json
     end
 
-    opts.on("-n", "--num N", "render templates N times with empty attrs (ignore stdin)") do |input|
+    opts.on("-n", "--num N", "render templates N times (ignores -i)") do |input|
       options[:parser_type] = :generator
       options[:parser_opts][:generator][:n] = Integer(input)
+      options[:input_file] ||= "/dev/null"
     end
 
-    opts.on("-o", "--output-dir [SOURCE_DIR:]TARGET_DIR", "output to target dir") do |input|
+    opts.on("-o", "--output [SOURCE_DIR:]TARGET_DIR", "output to target dir, relative from source dir") do |input|
       source_dir, target_dir = input.split(':')
       source_dir, target_dir = nil, source_dir if target_dir.nil?
 
@@ -300,7 +301,7 @@ options:
       options[:printer_opts][:directory][:target_dir] = target_dir
     end
 
-    opts.on("-r", "--require FILE", "require file (use with -I, or give a full path)") do |input|
+    opts.on("-r", "--require FILE", "require file (use full path, or relative to -I)") do |input|
       options[:requires] << input
     end
 
@@ -361,7 +362,7 @@ options:
     end
   end
 
-  input_io = File.open(input_file)
+  input_io = File.open(input_file || 0)
   parser_class = parser_classes[parser_type]
   parser = parser_class.new(input_io, parser_opts)
 
