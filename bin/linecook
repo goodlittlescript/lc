@@ -26,14 +26,6 @@ begin
       def __render__(erb)
         erb.result(::Kernel.binding)
       end
-
-      def __fetch__(method_name)
-        obj.kind_of?(::Hash) ? obj.fetch(method_name.to_s) : nil
-      end
-
-      def method_missing(method_name, *args)
-        args.empty? ? __fetch__(method_name) : super
-      end
     end
 
     class Template
