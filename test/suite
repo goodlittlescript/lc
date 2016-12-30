@@ -1,2 +1,2 @@
 #!/bin/bash
-ts test/linecook examples/*/demo
+ts test/linecook

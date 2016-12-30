@@ -6,9 +6,7 @@ begin
   ###########################################################################
   require 'optparse'
   require 'erb'
-  autoload :CSV, 'csv'
   autoload :YAML, 'yaml'
-  autoload :JSON, 'json'
   autoload :Pathname, 'pathname'
   autoload :FileUtils, 'fileutils'
 
@@ -162,24 +160,15 @@ begin
       end
     end
 
-    class CSVParser < Parser
-      def each
-        csv = CSV.new(io, options)
-        while row = csv.gets
-          yield row.kind_of?(Array) ? row : row.to_hash
-        end
-      end
-    end
-
-    class JSONParser < Parser
+    class LineParser < Parser
       def each
         while line = io.gets
-          yield JSON.parse(line)
+          yield YAML.load(line)
         end
       end
     end
 
-    class YAMLParser < Parser
+    class DocumentParser < Parser
       def each
         YAML.load_stream(io) do |obj|
           yield obj
@@ -189,8 +178,7 @@ begin
 
     class Generator < Parser
       def each
-        n = options[:n]
-        n.times { yield({}) }
+        yield({})
       end
     end
   end
@@ -198,9 +186,8 @@ begin
   ###########################################################################
 
   parser_classes = {
-    csv: CSVParser,
-    json: JSONParser,
-    yaml: YAMLParser,
+    line: LineParser,
+    document: DocumentParser,
     generator: Generator,
   }
   printer_classes = {
@@ -210,16 +197,10 @@ begin
   options = {
     input_file: nil,
     template_type: :file,
-    parser_type: :csv,
+    parser_type: :generator,
     parser_opts: {
-      csv: {
-        col_sep: ' ',
-        row_sep: "\n",
-        headers: false,
-        converters: :numeric,
-      },
-      json: {},
-      yaml: {},
+      line: {},
+      document: {},
       generator: {},
     },
     printer_type: :stdout,
@@ -243,9 +224,18 @@ options:
 
 }.lstrip
 
-    opts.on("-c", "--csv", "parse input as csv (default)") do
-      options[:parser_type] = :csv
-      options[:parser_opts][:csv][:headers] = false
+    opts.on("-A", "--attributes-stream FILE", "input attrs as lines") do |input|
+      options[:input_file] = input == '-' ? 0 : input
+      options[:parser_type] = :line
+    end
+
+    opts.on("-a", "--attributes-file FILE", "input attrs as documents") do |input|
+      options[:input_file] = input == '-' ? 0 : input
+      options[:parser_type] = :document
+    end
+
+    opts.on("-i", "--input INPUT_FILE", "input file (stdin)") do |input|
+      options[:input_file] = input == '-' ? 0 : input
     end
 
     opts.on("-d", "--directories", "render all files in specified directories") do
@@ -260,14 +250,6 @@ options:
       options[:printer_opts][:directory][:force] = input
     end
 
-    opts.on("-F", "--field-sep FIELD_SEP", "field sep for csv input (#{options[:parser_opts][:csv][:col_sep].inspect})") do |input|
-      options[:parser_opts][:csv][:col_sep] = input
-    end
-
-    opts.on("-H", "--[no-]headers", "convert fields to obj using headers") do |input|
-      options[:parser_opts][:csv][:headers] = input
-    end
-
     opts.on("-h", "--help", "print this help") do
       puts opts
       puts
@@ -276,20 +258,6 @@ options:
 
     opts.on("-I", "--load-path DIRECTORY", "specify \$LOAD_PATH directory") do |input|
       $LOAD_PATH.unshift input
-    end
-
-    opts.on("-i", "--input INPUT_FILE", "input file (stdin)") do |input|
-      options[:input_file] = input == '-' ? 0 : input
-    end
-
-    opts.on("-j", "--json", "parse input as json lines") do
-      options[:parser_type] = :json
-    end
-
-    opts.on("-n", "--num N", "render templates N times (ignores -i)") do |input|
-      options[:parser_type] = :generator
-      options[:parser_opts][:generator][:n] = Integer(input)
-      options[:input_file] ||= "/dev/null"
     end
 
     opts.on("-o", "--output [SOURCE_DIR:]TARGET_DIR", "output to target dir, relative from source dir") do |input|
@@ -303,14 +271,6 @@ options:
 
     opts.on("-r", "--require FILE", "require file (use full path, or relative to -I)") do |input|
       options[:requires] << input
-    end
-
-    opts.on("-R", "--row-sep ROW_SEP", "row sep for csv input (#{options[:parser_opts][:csv][:row_sep].inspect})") do |input|
-      options[:parser_opts][:csv][:row_sep] = input
-    end
-
-    opts.on("-y", "--yaml", "parse input as yaml documents") do
-      options[:parser_type] = :yaml
     end
   end.parse!
 
