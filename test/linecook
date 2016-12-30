@@ -124,27 +124,6 @@ linecook -h | grep -q "usage: linecook"
 }
 
 #
-# -I
-#
-
-test_linecook_I_specifies_LOAD_PATH_directory () {
-setup_fixture
-
-require_file="$ts_test_dir/methods.rb"
-cat > "$require_file" <<DOC
-class Linecook::Context
-  def obj
-    "override"
-  end
-end
-DOC
-
-linecook -I "$ts_test_dir" -r methods "$template_file" | assert_output "\
-got \"override\"
-"
-}
-
-#
 # -o
 #
 

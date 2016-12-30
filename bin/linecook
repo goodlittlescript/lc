@@ -240,10 +240,6 @@ options:
       exit
     end
 
-    opts.on("-I DIRECTORY", "specify \$LOAD_PATH directory") do |input|
-      $LOAD_PATH.unshift input
-    end
-
     opts.on("-o TARGET_DIR", "output to target dir") do |input|
       source_dir, target_dir = input.split(':')
       source_dir, target_dir = nil, source_dir if target_dir.nil?
