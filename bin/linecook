@@ -196,7 +196,7 @@ begin
   }
   options = {
     input_file: nil,
-    template_type: :file,
+    template_type: :file_or_dir,
     parser_type: :generator,
     parser_opts: {
       line: {},
@@ -236,10 +236,6 @@ options:
 
     opts.on("-i", "--input INPUT_FILE", "input file (stdin)") do |input|
       options[:input_file] = input == '-' ? 0 : input
-    end
-
-    opts.on("-d", "--directories", "render all files in specified directories") do
-      options[:template_type] = :directory
     end
 
     opts.on("-e", "specify templates as strings") do
@@ -294,31 +290,26 @@ options:
   tempfiles = []
   templates = []
   template_files.each do |template_file|
-    case template_type
-    when :string
+    case 
+    when template_type == :string
       require 'tempfile'
       tempfile = Tempfile.new('linecook')
       tempfile.puts(template_file)
       tempfile.close
       tempfiles << tempfile
       templates << Template.new(tempfile.path)
-    when :file
-      unless File.file?(template_file)
-        $stderr.puts "not a file: #{template_file.inspect}"
-        exit 1
-      end
+    when File.file?(template_file)
       templates << Template.new(template_file, source_dir)
-    when :directory
-      unless File.directory?(template_file)
-        $stderr.puts "not a directory: #{template_file.inspect}"
-        exit 1
-      end
+    when File.directory?(template_file)
       template_dir = template_file
       pattern = File.join(template_dir, '**/*')
       Dir.glob(pattern) do |template_file|
         next if File.directory?(template_file)
         templates << Template.new(template_file, source_dir || template_dir)
       end
+    else
+      $stderr.puts "does not exist: #{template_file.inspect}"
+      exit 1
     end
   end
 

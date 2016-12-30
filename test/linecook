@@ -41,6 +41,15 @@ got {}
 "
 }
 
+test_linecook_renders_each_template_under_dir () {
+setup_dir_fixture
+linecook "$templates_dir" | assert_output "\
+x {}
+y {}
+z {}
+"
+}
+
 test_linecook_prints_error_if_no_template_is_specified () {
 linecook 2>&1 | assert_output "\
 no template specified
@@ -49,13 +58,7 @@ no template specified
 
 test_linecook_prints_error_if_template_does_not_exist () {
 linecook "$template_file" 2>&1 | assert_output "\
-not a file: \"$template_file\"
-"
-}
-
-test_linecook_prints_error_if_dir_is_specified () {
-linecook "$ts_test_dir" 2>&1 | assert_output "\
-not a file: \"$ts_test_dir\"
+does not exist: \"$template_file\"
 "
 }
 
@@ -98,19 +101,6 @@ DOC
 linecook -a "$input_file" "$template_file" | assert_output "\
 got {\"a\"=>1, \"b\"=>2, \"c\"=>3}
 got [1, 2, 3]
-"
-}
-
-#
-# -d
-#
-
-test_linecook_d_renders_each_template_under_dir () {
-setup_dir_fixture
-linecook -d "$templates_dir" | assert_output "\
-x {}
-y {}
-z {}
 "
 }
 
@@ -167,10 +157,10 @@ got {}
 "
 }
 
-test_linecook_o_with_d_renders_each_template_by_relative_path () {
+test_linecook_o_renders_templates_under_dir_by_relative_path () {
 setup_dir_fixture
 
-linecook -o "$output_dir" -d "$templates_dir"
+linecook -o "$output_dir" "$templates_dir"
 
 cat "$output_dir/x" "$output_dir/y.erb"  "$output_dir/z/z.erb" | assert_output "\
 x {}
