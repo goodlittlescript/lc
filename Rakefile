@@ -1,5 +1,4 @@
 $:.unshift File.expand_path('../lib', __FILE__)
-require 'linecook/version'
 
 # Ronn is used to render roff from markdown
 vendor_dir = 'vendor'
@@ -16,10 +15,12 @@ end
 
 # Manpages
 readme = 'README.md'
-linecook_1 = 'man/man1/linecook.1' 
+linecook_1 = 'man/man1/linecook.1'
+version = `./bin/linecook -h | awk 'END { print $2 }'`
+reldate = `./bin/linecook -h | awk 'END { print $3 }'`
 file linecook_1 => [ronn_exe, readme] do
   mkdir_p File.dirname(linecook_1)
-  sh "ruby -I#{ronn_lib} #{ronn_exe} -r --pipe --organization='#{Linecook::VERSION}' --date='#{Linecook::RELDATE}' < '#{readme}' > #{linecook_1}"
+  sh "ruby -I#{ronn_lib} #{ronn_exe} -r --pipe --organization='#{version}' --date='#{reldate}' < '#{readme}' > #{linecook_1}"
 end
 
 desc "make manpages"
