@@ -248,8 +248,8 @@ options:
       options[:printer_opts][:directory][:target_dir] = target_dir
     end
 
-    opts.on("-r FILE", "require file (use full path, or relative to -I)") do |input|
-      options[:requires] << input
+    opts.on("-r FILE", "require file before rendering") do |input|
+      options[:requires] << File.expand_path(input)
     end
   end.parse!
 
