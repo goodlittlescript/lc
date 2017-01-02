@@ -8,8 +8,8 @@ begin
   autoload :FileUtils, 'fileutils'
 
   module Linecook
-    VERSION="1.0.2"
-    RELDATE="2016-12-13"
+    VERSION="2.0.0"
+    RELDATE="2017-01-02"
     URL="https://github.com/goodlittlescript/linecook"
 
     class Context < BasicObject
