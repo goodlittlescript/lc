@@ -3,110 +3,49 @@ linecook(1) -- render ERB templates
 
 ## SYNOPSIS
 
-`linecook` [options] TEMPLATE FIELDS...
+`linecook` [options] TEMPLATES...
 
 ## DESCRIPTION
 
-**linecook** renders ERB templates.  Templates can specify named arguments,
-defaults, and are simple enough to serve as recipes for all the little things.
+**linecook** renders ERB templates.  Templates have access to an 'obj'
+(typically a hash) read from an attributes file as YAML.  When multiple
+(documents are present in the attributes file the templates will render
+(multiple times.
+
+All files in a directory are rendered when specified as a template.  Options
+are provided to render results to an output directory.
 
 ## OPTIONS
 
 These options control how `linecook` operates.
 
-* `-A`, `--attribute KEY=VALUE`:
-  Sets an attribute by key.
+* `-A FILE`:
+  Read attrs as lines from FILE. STDIN can be specified as '-'.Each line is
+  parsed as YAML into an object.
 
-* `-a`, `--attributes-file FILE`:
-  Set attributes from a YAML file.
-
-* `-c`, `--csv-files`:
-  Treat FIELDS as csv files.
+* `-a FILE`:
+  Read attrs as YAML documents from FILE. STDIN can be specified as '-'.
 
 * `-e`:
   Treat TEMPLATE as the template string.
 
-* `-F`, `--field-sep FS`:
-  The csv field sep. (assumes -c)
-
-* `-f`, `--force`:
-  Force overwrite existing on `-o`.
-
-* `-H`, ` --headers`:
-   Indicates that csv files have header rows. If field names are set in the
-   template then map fields where the head- ers and field names match.
-   (assumes -c)
+* `-f`, `--[no-]force`:
+  Remove the target directory if it exists on '-o'. 
 
 * `-h`, `--help`:
   Prints help.
 
-* `-I`, `--path LINECOOK_PATH`:
-  Set the template search path.
+* `-o TARGET_DIR`:
+  Output results to the target dir, which will be created if it does not
+  exist. Templates are rendered using their basename; in the case of a
+  directory the output files will preserve the relative path to the
+  template.Multiple rendering are appended to each file.
 
-* `-l`, ` --list`:
-   List templates along LINECOOK_PATH that match the current TEMPLATE. If
-   not TEMPLATE is provided then all templates are listed.
-
-* `-o`, `--output-dir DIR`:
-   Print template to file.
-
-* `-X`, `--example`:
-   Print an example template.
-
-* `-x`, `--explain`:
-   Print the properties section of a template.
-
-## USAGE
-
-Templates are ruby ERB.  When rendered the template can access the fields of
-each record in the csv file as the Array `fields` and global attributes as the
-Hash `attrs`.
-
-    printf '%s\n' 'got <%= fields.inspect %> <%= attrs.inspect %>' > example.lc
-    printf '%s,%s,%s\n' a b c x y z > example.csv
-    linecook example.lc example.csv
-    # got ["a", "b", "c"] {}
-    # got ["x", "y", "z"] {}
-
-Templates can specify properties as YAML front- matter. Properties change the
-rendering behavior of templates, for instance by providing named attrs and
-fields.
-
-    cat > example.lc <<DOC
-    attrs:
-      key: value
-    fields:
-      a: A
-      b: 1
-    ---
-    got A=<%= a %> B=<%= b %> (<%= key %>)
-    DOC
-
-    printf '%s,%s\n' 1 2 3 4 > example.csv
-
-    linecook example.lc example.csv
-    # got A=1 B=2 (value)
-    # got A=4 B=4 (value)
-
-Note the `.lc` format is shebang-friendly.
-
-    cat > example <<DOC
-    #!/usr/bin/env linecook
-    $(cat example.lc)
-    DOC
-    chmod +x example
-
-    ./example example.csv
-    # got A=1 B=2 (value)
-    # got A=4 B=4 (value)
+* `-r RUBY_FILE`:
+  Require the specified ruby file. Use this to expand the Linecook::Context
+  class to make templates more intelligent.
 
 ## ENVIRONMENT
-
-The behavior of **linecook** can be modified via environment variables. Many
-of these may be set using options.
-
-* `LINECOOK_PATH` (~/.linecook:/etc/linecook):
-  The path for looking up templates.
 
 **linecook** reserves all variables starting with 'LINECOOK\_' for internal use.
 
